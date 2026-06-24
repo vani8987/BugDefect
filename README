@@ -1,0 +1,45 @@
+# Bug Tracking System (PHP + Vue + Docker)
+
+Полноценная система управления багами, построенная на:
+- чистом PHP backend (с кастомным CLI)
+- Vue 3 frontend (Vite)
+- MySQL
+- Docker для окружения
+
+---
+
+## 🚀 Быстрый старт
+
+### 1. Клонировать проект
+
+```bash
+git clone <repo-url>
+cd bugDefectProgect
+docker compose up --build
+```
+
+## Доступ к сервисам
+
+Frontend Vue
+http://localhost:5173
+
+Backend PHP API
+http://localhost:8000
+
+
+## Архитектура проекта
+
+bugDefectProgect/
+│
+├── backend/        # PHP API + CLI + core framework
+│   ├── Core/
+│   ├── Controllers/
+│   ├── Models/
+│   ├── database/
+│   └── public/
+│
+├── frontend/
+│   └── front/      # Vue 3 + Vite SPA
+│
+├── docker-compose.yml
+└── README.md
