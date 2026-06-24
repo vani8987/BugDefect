@@ -1,0 +1,91 @@
+@use '../../../assets/css/variables.scss' as *;
+
+.modal-window {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+  background: rgba(2, 8, 18, .72);
+  backdrop-filter: blur(8px);
+
+  &__content {
+    width: min(100%, 480px);
+    overflow: hidden;
+    background: linear-gradient(145deg, #193653, #091728);
+    border: 1px solid rgba(125, 211, 252, .24);
+    border-radius: 20px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .48), 0 0 36px rgba(56, 189, 248, .1);
+  }
+
+  &__heading {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 24px 24px 18px;
+    border-bottom: 1px solid rgba(148, 163, 184, .12);
+  }
+
+  &__eyebrow {
+    margin: 0 0 7px;
+    color: $primary;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin: 0;
+    color: $text-main;
+    font-size: 24px;
+    letter-spacing: -.04em;
+  }
+
+  &__close {
+    display: grid;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    color: $text-muted;
+    font-size: 24px;
+    line-height: 1;
+    place-items: center;
+    background: rgba(148, 163, 184, .08);
+    border: 1px solid rgba(148, 163, 184, .14);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: color .2s ease, background .2s ease, transform .2s ease;
+
+    &:hover {
+      color: $text-main;
+      background: rgba(56, 189, 248, .14);
+      transform: rotate(90deg);
+    }
+  }
+
+  &__body {
+    padding: 24px;
+  }
+}
+
+.modal-window-enter-active,
+.modal-window-leave-active {
+  transition: opacity .22s ease;
+
+  .modal-window__content {
+    transition: transform .22s ease, opacity .22s ease;
+  }
+}
+
+.modal-window-enter-from,
+.modal-window-leave-to {
+  opacity: 0;
+
+  .modal-window__content {
+    opacity: 0;
+    transform: translateY(12px) scale(.97);
+  }
+}

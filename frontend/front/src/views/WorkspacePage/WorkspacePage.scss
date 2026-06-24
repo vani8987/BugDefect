@@ -1,0 +1,234 @@
+@use '../../assets/css/variables.scss' as *;
+
+.workspace-page {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: clamp(36px, 6vw, 72px) clamp(20px, 5vw, 56px) 72px;
+
+  &__intro,
+  &__section-heading {
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  &__eyebrow {
+    margin-bottom: 10px;
+    color: $primary;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h1 {
+    color: $text-main;
+    font-size: clamp(32px, 5vw, 48px);
+    letter-spacing: -.05em;
+  }
+
+  h2 {
+    color: $text-main;
+    font-size: 24px;
+    letter-spacing: -.04em;
+  }
+
+  &__description {
+    max-width: 530px;
+    margin-top: 14px;
+    color: $text-muted;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  &__feedback {
+    width: fit-content;
+    margin: 18px 0 0;
+    padding: 10px 13px;
+    font-size: 13px;
+    font-weight: 650;
+    border: 1px solid;
+    border-radius: 10px;
+
+    &--success {
+      color: #a7f3d0;
+      background: rgba(52, 211, 153, .1);
+      border-color: rgba(52, 211, 153, .2);
+    }
+
+    &--error {
+      color: #fecaca;
+      background: rgba(248, 113, 113, .1);
+      border-color: rgba(248, 113, 113, .22);
+    }
+  }
+
+  &__intro > .ui-button {
+    flex: 0 0 auto;
+  }
+
+  &__board-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 26px;
+  }
+
+  &__board-link {
+    display: block;
+    min-width: 0;
+  }
+
+  &__loading {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    margin-top: 26px;
+    color: $text-muted;
+    font-size: 14px;
+    background: rgba(7, 17, 31, .32);
+    border: 1px dashed rgba(125, 211, 252, .2);
+    border-radius: 16px;
+  }
+
+  &__empty-boards {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 260px;
+    margin-top: 26px;
+    padding: 34px 20px;
+    text-align: center;
+    background: rgba(7, 17, 31, .32);
+    border: 1px dashed rgba(125, 211, 252, .22);
+    border-radius: 16px;
+
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h3 {
+      margin-top: 14px;
+      color: $text-main;
+      font-size: 20px;
+      letter-spacing: -.03em;
+    }
+
+    p {
+      max-width: 410px;
+      margin-top: 9px;
+      color: $text-muted;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+  }
+
+  &__empty-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    color: #07111f;
+    font-size: 27px;
+    font-weight: 500;
+    place-items: center;
+    background: linear-gradient(135deg, $primary, #a78bfa);
+    border-radius: 13px;
+    box-shadow: 0 0 26px rgba(56, 189, 248, .2);
+  }
+
+  &__empty-boards > .ui-button {
+    margin-top: 20px;
+  }
+
+  &__spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(125, 211, 252, .22);
+    border-top-color: $primary;
+    border-radius: 50%;
+    animation: workspace-spin .7s linear infinite;
+  }
+
+  &__boards {
+    background: linear-gradient(145deg, rgba(21, 43, 68, .72), rgba(10, 23, 42, .68));
+    border: 1px solid rgba(148, 163, 184, .14);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, .12);
+  }
+
+  &__boards {
+    margin-top: 28px;
+    padding: clamp(20px, 4vw, 32px);
+    border-radius: 20px;
+  }
+
+  &__board-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  &__form-hint {
+    margin: -2px 0 0;
+    padding: 10px 12px;
+    color: #a5f3fc;
+    font-size: 12px;
+    line-height: 1.45;
+    background: rgba(56, 189, 248, .08);
+    border: 1px solid rgba(56, 189, 248, .15);
+    border-radius: 9px;
+  }
+
+  &__form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+}
+
+@keyframes workspace-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 680px) {
+  .workspace-page {
+    &__intro,
+    &__section-heading {
+      align-items: flex-start;
+    }
+
+    &__intro {
+      flex-direction: column;
+    }
+
+    &__intro > .ui-button {
+      width: 100%;
+    }
+
+    &__section-heading {
+      gap: 12px;
+    }
+
+    &__form-actions {
+      flex-direction: column-reverse;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}

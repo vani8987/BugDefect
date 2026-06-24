@@ -1,0 +1,18 @@
+<?php
+
+use App\Controllers\AuthController;
+use App\Controllers\BoardMemberController;
+use App\Controllers\BoardsController;
+use Core\Router;
+
+// регистрация
+Router::route('/api/register', 'POST', [AuthController::class, 'register'], false);
+Router::route('/api/login', 'POST', [AuthController::class, 'login'], false);
+Router::route('/api/logout', 'POST', [AuthController::class, 'logout'], true);
+Router::route('/api/me', 'GET', [AuthController::class, 'user'], true);
+
+// доска
+Router::route('/api/createBoard', 'POST', [BoardsController::class, 'createBoard'], true);
+Router::route('/api/boards', 'GET', [BoardsController::class, 'getAllBoards'], true);
+Router::route('/api/boards/{boardId}', 'GET', [BoardsController::class, 'getBoard'], true);
+Router::route('/api/boards/{boardId}/members', 'GET', [BoardMemberController::class, 'getUsers'], true);

@@ -1,0 +1,78 @@
+@use '../../../assets/css/variables.scss' as *;
+
+.stat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+  padding: 20px;
+  background: linear-gradient(145deg, rgba(21, 43, 68, .72), rgba(10, 23, 42, .68));
+  border: 1px solid rgba(148, 163, 184, .14);
+  border-radius: 16px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .12);
+  overflow: hidden;
+
+  &::after {
+    position: absolute;
+    top: -52px;
+    right: -48px;
+    width: 150px;
+    height: 150px;
+    content: '';
+    background: radial-gradient(circle, rgba(56, 189, 248, .18), transparent 68%);
+    pointer-events: none;
+  }
+
+  span,
+  strong,
+  small {
+    position: relative;
+    z-index: 1;
+    color: $text-muted;
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  strong {
+    margin: 12px 0 auto;
+    color: $text-main;
+    font-size: 38px;
+    letter-spacing: -.06em;
+  }
+
+  small {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  &__icon {
+    position: absolute;
+    top: 17px;
+    right: 17px;
+    z-index: 1;
+    width: 50px;
+    height: 50px;
+    color: rgba(125, 211, 252, .32);
+    pointer-events: none;
+    transform: rotate(-7deg);
+  }
+
+  &--violet {
+    &::after {
+      background: radial-gradient(circle, rgba(167, 139, 250, .2), transparent 68%);
+    }
+
+    .stat-card__icon {
+      color: rgba(196, 181, 253, .32);
+    }
+  }
+}
+
+@media (max-width: 680px) {
+  .stat-card {
+    min-height: 128px;
+  }
+}
