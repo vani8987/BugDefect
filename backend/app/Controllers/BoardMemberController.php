@@ -12,7 +12,11 @@ use Core\Logger;
 use Core\Request;
 use Core\Response;
 
-class BoardMemberController extends Controller {
+interface BoardMemberControllerInterface {
+    public function getUsers(string $boardId): void;
+}
+
+class BoardMemberController extends Controller implements BoardMemberControllerInterface {
     private BoardsMember $boardMember;
     private User $user;
     private Roles $roles;
@@ -58,23 +62,7 @@ class BoardMemberController extends Controller {
             return;
         }
 
-        $memberships = $this->boardMember->findAll(['user_id', 'role_id'], 'board_id', (int) $boardId);
-        $members = [];
-
-        foreach ($memberships as $membership) {
-            $member = $this->user->find(['id', 'name', 'email'], (int) $membership['user_id']);
-            $role = $this->roles->find(['name'], (int) $membership['role_id']);
-
-            if ($member === null || $role === null) {
-                $this->logger->warning('Board member data is incomplete.');
-                continue;
-            }
-
-            $members[] = [
-                ...$member,
-                'role' => $role['name'],
-            ];
-        }
+        $members = $this->boardMember->getMembersWithRoles((int) $boardId);
 
         $this->response->json([
             'members' => $members,

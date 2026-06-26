@@ -10,8 +10,13 @@ use App\Models\Boards;
 use App\Models\BoardsMember;
 use App\Models\Roles;
 
+interface BoardsControllerInterface {
+    public function createBoard();
+    public function getAllBoards();
+    public function getBoard(string $boardId);
+}
 
-class BoardsController extends Controller {
+class BoardsController extends Controller implements BoardsControllerInterface {
     private Boards $boards;
     private BoardsMember $boardsMember;
     private Roles $roles;

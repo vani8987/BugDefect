@@ -13,6 +13,9 @@ use App\Models\User;
 
 interface interfaceAuth {
     public function register();
+    public function login();
+    public function logout();
+    public function user();
 }
 
 

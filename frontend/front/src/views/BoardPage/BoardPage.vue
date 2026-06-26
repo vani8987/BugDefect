@@ -136,7 +136,7 @@
         </p>
         <div class="board-page__form-actions">
           <UiButton variant="secondary" @click="closeAddMemberModal">Отмена</UiButton>
-          <UiButton type="submit">Добавить</UiButton>
+          <UiButton type="submit" @click="inviteStore.sendInvite(boardId, memberDraft)">Добавить</UiButton>
         </div>
       </form>
     </UiModal>
@@ -156,6 +156,9 @@ import UiStatCard from '@/components/ui/stat-card/UiStatCard.vue'
 import UiTextarea from '@/components/ui/textarea/UiTextarea.vue'
 import { useBoardStore } from '@/stores/boardStore'
 import { getRoleLabel } from '@/Ts/role'
+import { useInviteStore } from '@/stores/InviteStore'
+
+const inviteStore = useInviteStore()
 
 const route = useRoute()
 const boardStore = useBoardStore()

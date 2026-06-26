@@ -55,27 +55,17 @@
               :aria-expanded="isNotificationsOpen"
               @click="isNotificationsOpen = !isNotificationsOpen"
             >
-              <span class="header__notification__count">1</span>
+              <span v-if="unreadNotificationsCount > 0" class="header__notification__count">{{ unreadNotificationsCount }}</span>
               <IoNotificationsOutline />
             </button>
 
             <Transition name="notification-menu">
               <section v-if="isNotificationsOpen" class="header__notification-menu" aria-label="Уведомления">
-                <div class="header__notification-heading">
-                  <div>
-                    <span>Уведомления</span>
-                    <small>1 новое</small>
-                  </div>
-                  <span class="header__notification-dot" aria-hidden="true"></span>
-                </div>
-
-                <article class="header__notification-item">
-                  <span class="header__notification-icon"><IoNotificationsOutline /></span>
-                  <div>
-                    <strong>Добро пожаловать в BugDefect</strong>
-                    <p>Здесь появятся приглашения в доски и важные обновления.</p>
-                  </div>
-                </article>
+                <NotificationList
+                  :notifications="notificationStore.notifications"
+                  @accept="acceptNotification"
+                  @decline="declineNotification"
+                />
               </section>
             </Transition>
           </div>
@@ -94,24 +84,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useAuthStore } from '@/stores/AuthStore';
-import { IoNotificationsOutline } from 'vue-icons-plus/io';
-import { IpHamburger, IpLogout, IpSetting } from 'vue-icons-plus/ip';
-import { TbMenu2 } from 'vue-icons-plus/tb';
-import { useRouter } from 'vue-router';
+import { computed, ref, watch } from 'vue'
+import { useAuthStore } from '@/stores/AuthStore'
+import { IoNotificationsOutline } from 'vue-icons-plus/io'
+import { IpLogout, IpSetting } from 'vue-icons-plus/ip'
+import { TbMenu2 } from 'vue-icons-plus/tb'
+import { useRouter } from 'vue-router'
 import { getRoleLabel } from '@/Ts/role'
+import NotificationList from '@/components/notifications/NotificationList.vue'
+import { useNotificationStore } from '@/stores/NotificationStore'
 
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const router = useRouter()
 const isMobileMenuOpen = ref<boolean>(false)
 const isNotificationsOpen = ref<boolean>(false)
 
-const logout = async () => {
-  await authStore.logout()
-  router.push('/login')
+const unreadNotificationsCount = computed(() => notificationStore.notifications.filter((notification) => !notification.is_read).length)
+
+function acceptNotification(id: number): void {
+  void id
 }
 
+function declineNotification(id: number): void {
+  void id
+}
+
+watch(
+  () => authStore.user,
+  async (user) => {
+    if (user === null) {
+      notificationStore.clear()
+      return
+    }
+
+    await notificationStore.getAll()
+  },
+  { immediate: true },
+)
+
+watch(isNotificationsOpen, async (isOpen, wasOpen) => {
+     if (wasOpen === true && isOpen === false) {
+      await notificationStore.updateAll()
+      return
+    }
+  },
+)
+
+const logout = async () => {
+  await authStore.logout()
+  notificationStore.clear()
+  router.push('/login')
+}
 </script>
 
 <style src="./header.scss" lang="scss" />

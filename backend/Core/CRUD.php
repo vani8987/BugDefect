@@ -13,6 +13,16 @@ interface ModelInterface {
     public function update(array $nameColumns, array $arrValues, int $id): bool;
     public function findAll(array $nameColumns, ?string $whereColumn = null, mixed $value = null): array;
     public function findOneBy(array $nameColumns, string $whereColumn, mixed $value): ?array;
+    public function join(
+        array $columnsName,
+        string $joinTable,
+        string $firstColumn,
+        string $operator,
+        string $secondColumn,
+        ?string $whereColumn = null,
+        mixed $whereValue = null,
+        string $mode = 'INNER'
+    );
 }
 
 class CRUD extends ConnectDB implements ModelInterface  {
@@ -46,11 +56,14 @@ class CRUD extends ConnectDB implements ModelInterface  {
 
     private function quoteIdentifier(string $identifier): string
     {
-        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $identifier)) {
-            throw new InvalidArgumentException("Invalid SQL identifier: {$identifier}");
+        if (trim($identifier) === '') {
+            throw new InvalidArgumentException('Identifier cannot be empty.');
         }
 
-        return "`{$identifier}`";
+        return implode('.', array_map(
+            fn(string $part) => '`' . str_replace('`', '``', $part) . '`',
+            explode('.', $identifier)
+        ));
     }
 
     private function quoteIdentifiers(array $identifiers): array
@@ -176,6 +189,67 @@ class CRUD extends ConnectDB implements ModelInterface  {
             return $statement->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $err) {
             $this->logger->error('CRUD findAll failed: ' . $err->getMessage());
+            return [];
+        }
+    }
+
+    public function join(
+        array $columnsName,
+        string $joinTable,
+        string $firstColumn,
+        string $operator,
+        string $secondColumn,
+        ?string $whereColumn = null,
+        mixed $whereValue = null,
+        string $mode = 'INNER'
+    ): array {
+        try {
+            if (empty($columnsName)) {
+                $this->logger->warning('CRUD join failed: columns cannot be empty.');
+                return [];
+            }
+
+            $allowedModes = ['INNER', 'LEFT', 'RIGHT'];
+            $mode = strtoupper($mode);
+
+            if (!in_array($mode, $allowedModes, true)) {
+                $this->logger->warning("CRUD join failed: invalid join mode {$mode}.");
+                return [];
+            }
+
+            $allowedOperators = ['=', '!=', '<>', '>', '<', '>=', '<='];
+
+            if (!in_array($operator, $allowedOperators, true)) {
+                $this->logger->warning("CRUD join failed: invalid operator {$operator}.");
+                return [];
+            }
+
+            $columns = implode(', ', $this->quoteIdentifiers($columnsName));
+            $joinTable = $this->quoteIdentifier($joinTable);
+            $firstColumn = $this->quoteIdentifier($firstColumn);
+            $secondColumn = $this->quoteIdentifier($secondColumn);
+
+            $query = "
+                SELECT {$columns}
+                FROM {$this->name}
+                {$mode} JOIN {$joinTable}
+                ON {$firstColumn} {$operator} {$secondColumn}
+            ";
+
+            if ($whereColumn !== null) {
+                $whereColumn = $this->quoteIdentifier($whereColumn);
+                $query .= " WHERE {$whereColumn} = ?";
+
+                $statement = $this->pdo->prepare($query);
+                $statement->execute([$whereValue]);
+            } else {
+                $statement = $this->pdo->query($query);
+            }
+
+            $this->logger->info("Join requested from {$this->name}.");
+            return $statement->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $err) {
+            $this->logger->error('CRUD join failed: ' . $err->getMessage());
             return [];
         }
     }

@@ -16,6 +16,7 @@
 git clone <repo-url>
 cd bugDefectProgect
 docker compose up --build
+docker compose up
 ```
 
 ## Доступ к сервисам

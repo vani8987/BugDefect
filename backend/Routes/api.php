@@ -3,6 +3,8 @@
 use App\Controllers\AuthController;
 use App\Controllers\BoardMemberController;
 use App\Controllers\BoardsController;
+use App\Controllers\InviteBoardController;
+use App\Controllers\NotificationController;
 use Core\Router;
 
 // регистрация
@@ -16,3 +18,8 @@ Router::route('/api/createBoard', 'POST', [BoardsController::class, 'createBoard
 Router::route('/api/boards', 'GET', [BoardsController::class, 'getAllBoards'], true);
 Router::route('/api/boards/{boardId}', 'GET', [BoardsController::class, 'getBoard'], true);
 Router::route('/api/boards/{boardId}/members', 'GET', [BoardMemberController::class, 'getUsers'], true);
+Router::route('/api/board/{boardId}/invite', 'POST', [InviteBoardController::class, 'addUser'], true);
+
+// уведомления
+Router::route('/api/notifications', 'GET', [NotificationController::class, 'getAll'], true);
+Router::route('/api/notifications/read', 'PATCH', [NotificationController::class, 'markAllAsRead'], true);
