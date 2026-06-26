@@ -121,6 +121,11 @@
     margin-top: 10px;
   }
 
+  &__process {
+    color: #a5f3fc;
+    font-weight: 700;
+  }
+
   &__button {
     min-height: 30px;
     padding: 0 10px;
@@ -137,6 +142,13 @@
       color: $primary;
       border-color: rgba(125, 211, 252, .28);
       transform: translateY(-1px);
+    }
+
+    &:disabled {
+      color: $text-muted;
+      cursor: wait;
+      opacity: .65;
+      transform: none;
     }
 
     &--accept {

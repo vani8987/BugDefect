@@ -3,9 +3,13 @@ import { api } from "@/utils/api";
 import { execute, type RequestState } from "@/utils/execute";
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { useBoardStore } from "./boardStore";
+
 
 
 export const useNotificationStore = defineStore('notificationStore', () => {
+    const boardStore = useBoardStore()
+
     const notifications = ref<notificationInvite[]>([])
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -38,13 +42,43 @@ export const useNotificationStore = defineStore('notificationStore', () => {
 
         if (res !== null)  {
            message.value = res.message
+           notifications.value = notifications.value.map((notification) => ({
+            ...notification,
+            is_read: true,
+           }))
            return true
         }
 
-        notifications.value = notifications.value.map((notification) => ({
-            ...notification,
-            is_read: true,
-        }))
+        return false
+    }
+
+    const inviteClick = async (boardId: number, inviteId: number, mode: 'accept' | 'reject') => {
+        const res = await execute<responseNotificationMessage>(
+            () => api.post(`/boards/${boardId}/invite/${mode}`, {invite_id: inviteId}, {withCredentials: true}),
+            states
+        )
+
+        if (res !== null)  {
+           message.value = res.message
+           notifications.value = notifications.value.map((notification) => {
+            if (notification.data?.invite_id !== inviteId) return notification
+
+            return {
+                ...notification,
+                is_read: true,
+                data: {
+                    ...notification.data,
+                    status: mode === 'accept' ? 'accepted' : 'declined',
+                },
+            }
+           })
+
+           if (mode === 'accept') {
+            await boardStore.getAll()
+           }
+
+           return true
+        }
 
         return false
     }
@@ -60,6 +94,7 @@ export const useNotificationStore = defineStore('notificationStore', () => {
         message,
         getAll,
         updateAll,
+        inviteClick,
         clear
     }
 })

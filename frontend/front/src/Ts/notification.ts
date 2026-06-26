@@ -11,6 +11,7 @@ export interface notificationInvite {
 interface dataInvite {
     'invite_id': number
     'board_id': number
+    status?: 'pending' | 'accepted' | 'declined'
 }
 
 export interface responseNotification {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="notification-list" aria-label="Уведомления">
     <div class="notification-list__heading">
       <div>
@@ -28,11 +28,36 @@
 
           <p>{{ notification.description }}</p>
 
-          <div v-if="notification.type === 'invite'" class="notification-list__actions">
-            <button type="button" class="notification-list__button notification-list__button--accept" @click="$emit('accept', notification.id)">
+          <p
+            v-if="notification.type === 'invite' && processingId === notification.id"
+            class="notification-list__process"
+          >
+            Обрабатываем приглашение...
+          </p>
+
+          <p
+            v-else-if="notification.type === 'invite' && notification.data?.status !== 'pending'"
+            class="notification-list__process"
+          >
+            {{ getInviteStatusText(notification.data?.status) }}
+          </p>
+
+          <div
+            v-else-if="notification.type === 'invite'"
+            class="notification-list__actions"
+          >
+            <button
+              type="button"
+              class="notification-list__button notification-list__button--accept"
+              @click="$emit('accept', notification.id)"
+            >
               Принять
             </button>
-            <button type="button" class="notification-list__button" @click="$emit('decline', notification.id)">
+            <button
+              type="button"
+              class="notification-list__button"
+              @click="$emit('decline', notification.id)"
+            >
               Отклонить
             </button>
           </div>
@@ -53,6 +78,7 @@ import type { notificationInvite } from '@/Ts/notification'
 
 const props = defineProps<{
   notifications: notificationInvite[]
+  processingId?: number | null
 }>()
 
 defineEmits<{
@@ -62,6 +88,13 @@ defineEmits<{
 
 const unreadCount = computed(() => props.notifications.filter((notification) => !notification.is_read).length)
 const unreadLabel = computed(() => unreadCount.value === 0 ? 'Новых нет' : `${unreadCount.value} новых`)
+
+function getInviteStatusText(status: 'pending' | 'accepted' | 'declined' | undefined): string {
+  if (status === 'accepted') return 'Вы приняли приглашение'
+  if (status === 'declined') return 'Вы отклонили приглашение'
+
+  return 'Приглашение уже обработано'
+}
 </script>
 
 <style src="./notification-list.scss" lang="scss" />

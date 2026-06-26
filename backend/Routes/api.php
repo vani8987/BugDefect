@@ -23,3 +23,5 @@ Router::route('/api/board/{boardId}/invite', 'POST', [InviteBoardController::cla
 // уведомления
 Router::route('/api/notifications', 'GET', [NotificationController::class, 'getAll'], true);
 Router::route('/api/notifications/read', 'PATCH', [NotificationController::class, 'markAllAsRead'], true);
+Router::route('/api/boards/{boardId}/invite/accept', 'POST', [NotificationController::class, 'acceptInvite'], true);
+Router::route('/api/boards/{boardId}/invite/reject', 'POST', [NotificationController::class, 'rejectInvite'], true);

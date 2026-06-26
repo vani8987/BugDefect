@@ -18,7 +18,7 @@
           {{ boardView.role }}
         </span>
 
-        <UiButton variant="secondary" @click="isAddMemberModalOpen = true">
+        <UiButton variant="secondary" v-if="boardStore.currentBoard?.role === 'admin'" @click="isAddMemberModalOpen = true">
           Добавить участника
         </UiButton>
 
@@ -72,7 +72,7 @@
             <p class="board-page__eyebrow">Задачи</p>
             <h2>Рабочее пространство</h2>
           </div>
-          <UiButton @click="isCreateDefectModalOpen = true">Новый дефект</UiButton>
+          <UiButton v-if="boardStore.currentBoard?.role === 'admin'" @click="isCreateDefectModalOpen = true">Новый дефект</UiButton>
         </div>
         <div class="board-page__placeholder">
           Здесь будет доска со статусами и карточками задач.

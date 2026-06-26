@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <header
     class="header"
     :class="{
@@ -63,6 +63,7 @@
               <section v-if="isNotificationsOpen" class="header__notification-menu" aria-label="Уведомления">
                 <NotificationList
                   :notifications="notificationStore.notifications"
+                  :processing-id="processingNotificationId"
                   @accept="acceptNotification"
                   @decline="declineNotification"
                 />
@@ -70,7 +71,7 @@
             </Transition>
           </div>
 
-          <button class="header__settings" type="button" aria-label="Настройки" title="Настройки (будет сделан позже)">
+          <button class="header__settings" type="button" aria-label="Настройки" title="Настройки (будет сделано позже)">
             <IpSetting />
           </button>
 
@@ -99,15 +100,34 @@ const notificationStore = useNotificationStore()
 const router = useRouter()
 const isMobileMenuOpen = ref<boolean>(false)
 const isNotificationsOpen = ref<boolean>(false)
+const processingNotificationId = ref<number | null>(null)
 
 const unreadNotificationsCount = computed(() => notificationStore.notifications.filter((notification) => !notification.is_read).length)
 
-function acceptNotification(id: number): void {
-  void id
+async function handleInviteClick(id: number, mode: 'accept' | 'reject'): Promise<void> {
+  if (processingNotificationId.value !== null) return
+
+  const notification = notificationStore.notifications.find((notification) => notification.id === id)
+  const boardId = notification?.data?.board_id
+  const inviteId = notification?.data?.invite_id
+
+  if (typeof boardId !== 'number' || typeof inviteId !== 'number') return
+
+  processingNotificationId.value = id
+
+  try {
+    await notificationStore.inviteClick(boardId, inviteId, mode)
+  } finally {
+    processingNotificationId.value = null
+  }
 }
 
-function declineNotification(id: number): void {
-  void id
+async function acceptNotification(id: number): Promise<void> {
+  await handleInviteClick(id, 'accept')
+}
+
+async function declineNotification(id: number): Promise<void> {
+  await handleInviteClick(id, 'reject')
 }
 
 watch(
@@ -124,12 +144,10 @@ watch(
 )
 
 watch(isNotificationsOpen, async (isOpen, wasOpen) => {
-     if (wasOpen === true && isOpen === false) {
-      await notificationStore.updateAll()
-      return
-    }
-  },
-)
+  if (wasOpen === true && isOpen === false) {
+    await notificationStore.updateAll()
+  }
+})
 
 const logout = async () => {
   await authStore.logout()
@@ -139,3 +157,4 @@ const logout = async () => {
 </script>
 
 <style src="./header.scss" lang="scss" />
+
