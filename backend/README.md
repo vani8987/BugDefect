@@ -74,7 +74,9 @@ GET    /api/me
 POST   /api/createBoard
 GET    /api/boards
 GET    /api/boards/{boardId}
+DELETE /api/boards/{boardId}
 GET    /api/boards/{boardId}/members
+DELETE /api/boards/{boardId}/members/{userId}
 POST   /api/board/{boardId}/invite
 
 GET    /api/notifications
@@ -84,6 +86,18 @@ POST   /api/boards/{boardId}/invite/reject
 ```
 
 Защищённые маршруты используют сессию пользователя.
+
+## Доски и участники
+
+Пользователь видит только те доски, где он есть в `board_member`. Для страницы доски backend возвращает данные доски, роль текущего пользователя и количество участников.
+
+Администратор доски может:
+
+- удалить доску через `DELETE /api/boards/{boardId}`;
+- удалить участника через `DELETE /api/boards/{boardId}/members/{userId}`;
+- отправить приглашение пользователю через `POST /api/board/{boardId}/invite`.
+
+Перед удалением backend проверяет авторизацию, валидность ID, существование записи и права администратора. При удалении доски сначала удаляются связи участников с доской, затем сама доска.
 
 ## Приглашения и уведомления
 

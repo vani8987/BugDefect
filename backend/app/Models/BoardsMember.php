@@ -62,4 +62,44 @@ class BoardsMember extends CRUD {
 
         return $role['name'] === 'admin';
     }
+
+    public function findBoardMember(int $boardId, int $userId): ?array
+    {
+        try {
+            $statement = $this->pdo->prepare("
+                SELECT id, board_id, user_id, role_id
+                FROM board_member
+                WHERE board_id = ?
+                AND user_id = ?
+                LIMIT 1
+            ");
+
+            $statement->execute([$boardId, $userId]);
+
+            $member = $statement->fetch(PDO::FETCH_ASSOC);
+
+            return $member === false ? null : $member;
+        } catch (Exception $err) {
+            $this->logger->error('Find board member failed: ' . $err->getMessage());
+            return null;
+        }
+    }
+
+    public function deleteBoardMember(int $boardId, int $userId): bool
+    {
+        try {
+            $statement = $this->pdo->prepare("
+                DELETE FROM board_member
+                WHERE board_id = ?
+                AND user_id = ?
+            ");
+
+            $statement->execute([$boardId, $userId]);
+
+            return $statement->rowCount() > 0;
+        } catch (Exception $err) {
+            $this->logger->error('Delete board member failed: ' . $err->getMessage());
+            return false;
+        }
+    }
 }

@@ -17,7 +17,9 @@ Router::route('/api/me', 'GET', [AuthController::class, 'user'], true);
 Router::route('/api/createBoard', 'POST', [BoardsController::class, 'createBoard'], true);
 Router::route('/api/boards', 'GET', [BoardsController::class, 'getAllBoards'], true);
 Router::route('/api/boards/{boardId}', 'GET', [BoardsController::class, 'getBoard'], true);
+Router::route('/api/boards/{boardId}', 'DELETE', [BoardsController::class, 'deleteBoard'], true);
 Router::route('/api/boards/{boardId}/members', 'GET', [BoardMemberController::class, 'getUsers'], true);
+Router::route('/api/boards/{boardId}/members/{userId}', 'DELETE', [BoardMemberController::class, 'deleteUser'], true);
 Router::route('/api/board/{boardId}/invite', 'POST', [InviteBoardController::class, 'addUser'], true);
 
 // уведомления

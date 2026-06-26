@@ -22,6 +22,15 @@
           Добавить участника
         </UiButton>
 
+        <UiButton
+          v-if="boardStore.currentBoard?.role === 'admin'"
+          class="board-page__delete-board"
+          variant="secondary"
+          @click="deleteBoard"
+        >
+          Удалить доску
+        </UiButton>
+
         <UiDropdown v-model="isParticipantsOpen" label="Участники">
           <p class="board-page__eyebrow">Команда</p>
           <h2>Участники</h2>
@@ -37,6 +46,15 @@
                 <small>{{ member.email }}</small>
               </div>
               <span class="board-page__member-role">{{ member.role }}</span>
+              <button
+                v-if="boardStore.currentBoard?.role === 'admin' && member.id !== authStore.user?.id"
+                class="board-page__member-remove"
+                type="button"
+                aria-label="Удалить участника"
+                @click.stop="deleteMember(member.id)"
+              >
+                Удалить
+              </button>
             </article>
           </div>
 
@@ -66,18 +84,12 @@
     </UiStats>
 
     <div class="board-page__layout">
-      <section class="board-page__panel board-page__panel--tasks">
-        <div class="board-page__panel-heading">
-          <div>
-            <p class="board-page__eyebrow">Задачи</p>
-            <h2>Рабочее пространство</h2>
-          </div>
-          <UiButton v-if="boardStore.currentBoard?.role === 'admin'" @click="isCreateDefectModalOpen = true">Новый дефект</UiButton>
-        </div>
-        <div class="board-page__placeholder">
-          Здесь будет доска со статусами и карточками задач.
-        </div>
-      </section>
+      <BoardPanel
+        :columns="boardColumns"
+        :can-manage="boardStore.currentBoard?.role === 'admin'"
+        @add-defect="isCreateDefectModalOpen = true"
+        @add-status="isCreateStatusModalOpen = true"
+      />
     </div>
 
     <UiModal
@@ -132,11 +144,39 @@
           <option value="admin">Администратор</option>
         </UiSelect>
         <p class="board-page__form-note">
-          Позже здесь появится отправка приглашения и подтверждение участником.
+          Пользователю будет отправлено приглашение на доску.
         </p>
         <div class="board-page__form-actions">
           <UiButton variant="secondary" @click="closeAddMemberModal">Отмена</UiButton>
           <UiButton type="submit" @click="inviteStore.sendInvite(boardId, memberDraft)">Добавить</UiButton>
+        </div>
+      </form>
+    </UiModal>
+
+    <UiModal
+      :is-open="isCreateStatusModalOpen"
+      eyebrow="Новый статус"
+      title="Добавить статус"
+      @close="closeCreateStatusModal"
+    >
+      <form class="board-page__form" @submit.prevent>
+        <UiInput
+          v-model="statusDraft.title"
+          label="Название статуса"
+          placeholder="Например, Заблокировано"
+          :maxlength="80"
+          required
+        />
+        <UiTextarea
+          v-model="statusDraft.description"
+          label="Описание"
+          hint="необязательно"
+          placeholder="Коротко опиши, какие дефекты будут попадать в эту колонку"
+          :maxlength="255"
+        />
+        <div class="board-page__form-actions">
+          <UiButton variant="secondary" @click="closeCreateStatusModal">Отмена</UiButton>
+          <UiButton type="submit">Создать статус</UiButton>
         </div>
       </form>
     </UiModal>
@@ -154,23 +194,98 @@ import UiSelect from '@/components/ui/select/UiSelect.vue'
 import UiStats from '@/components/ui/stats/UiStats.vue'
 import UiStatCard from '@/components/ui/stat-card/UiStatCard.vue'
 import UiTextarea from '@/components/ui/textarea/UiTextarea.vue'
+import BoardPanel from '@/components/board-workspace/board-panel/BoardPanel.vue'
+import type { BoardStatusColumn } from '@/components/board-workspace/types'
 import { useBoardStore } from '@/stores/boardStore'
-import { getRoleLabel } from '@/Ts/role'
+import { useAuthStore } from '@/stores/AuthStore'
 import { useInviteStore } from '@/stores/InviteStore'
+import { getRoleLabel } from '@/Ts/role'
+import router from '@/router'
 
 const inviteStore = useInviteStore()
+const boardStore = useBoardStore()
+const authStore = useAuthStore()
 
 const route = useRoute()
-const boardStore = useBoardStore()
 const boardId = computed(() => String(route.params.boardId))
 const isParticipantsOpen = ref(false)
 const isCreateDefectModalOpen = ref(false)
 const isAddMemberModalOpen = ref(false)
+const isCreateStatusModalOpen = ref(false)
 const defectDraft = ref({
   title: '',
   description: '',
   status: 'new',
 })
+const statusDraft = ref({
+  title: '',
+  description: '',
+})
+const boardColumns: BoardStatusColumn[] = [
+  {
+    id: 'new',
+    title: 'Новые',
+    description: 'Ожидают разбора',
+    items: [
+      {
+        id: 1,
+        code: 'BUG-14',
+        title: 'Не открывается список участников',
+        description: 'При клике на кнопку участников меню иногда не появляется.',
+        priority: 'high',
+        assignee: 'Иван',
+        due: 'Сегодня',
+      },
+      {
+        id: 2,
+        code: 'BUG-18',
+        title: 'Счётчик уведомлений не обновляется',
+        description: 'После просмотра уведомлений бейдж остаётся активным.',
+        priority: 'medium',
+        assignee: 'Без исполнителя',
+        due: 'Завтра',
+      },
+    ],
+  },
+  {
+    id: 'in_progress',
+    title: 'В работе',
+    description: 'Исправляются сейчас',
+    items: [
+      {
+        id: 3,
+        code: 'BUG-21',
+        title: 'Повторный клик по приглашению',
+        description: 'Нужно блокировать повторное действие во время запроса.',
+        priority: 'medium',
+        assignee: 'Мария',
+        due: '2 дня',
+      },
+    ],
+  },
+  {
+    id: 'review',
+    title: 'Проверка',
+    description: 'Нужна проверка',
+    items: [
+      {
+        id: 4,
+        code: 'BUG-25',
+        title: 'Проверить статус приглашения',
+        description: 'После принятия или отказа кнопки должны исчезать.',
+        priority: 'low',
+        assignee: 'Алексей',
+        due: 'На неделе',
+      },
+    ],
+  },
+  {
+    id: 'done',
+    title: 'Готово',
+    description: 'Исправлено',
+    items: [],
+  },
+]
 const memberDraft = ref({
   email: '',
   role: 'developer',
@@ -221,6 +336,21 @@ function closeAddMemberModal(): void {
   memberDraft.value = { email: '', role: 'developer' }
 }
 
+function closeCreateStatusModal(): void {
+  isCreateStatusModalOpen.value = false
+  statusDraft.value = { title: '', description: '' }
+}
+
+async function deleteBoard(): Promise<void> {
+  await boardStore.deleteBoard(boardId.value)
+  router.push({name: 'workspace'})
+}
+
+async function deleteMember(memberId: number): Promise<void> {
+  await boardStore.deleteUserInBoarde(boardId.value, memberId)
+  await boardStore.getBoardMembers()
+}
+
 onMounted(loadBoard)
 
 watch(boardId, () => {
@@ -230,3 +360,4 @@ watch(boardId, () => {
 </script>
 
 <style src="./BoardPage.scss" lang="scss" />
+

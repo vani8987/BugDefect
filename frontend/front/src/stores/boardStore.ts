@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { execute, type RequestState } from "@/utils/execute";
 import { api } from "@/utils/api";
-import type { newBoard, createBorder, board, boardsResponse, oneBoardResponse, boardStatistic, boardMember, boardMembersResponse } from "@/Ts/board";
+import type { newBoard, messageBoarde, board, boardsResponse, oneBoardResponse, boardStatistic, boardMember, boardMembersResponse } from "@/Ts/board";
 
 export const useBoardStore = defineStore('boardStore', () => {
     const boards = ref<board[]>([])
@@ -16,7 +16,7 @@ export const useBoardStore = defineStore('boardStore', () => {
     const states: RequestState = {loading, error, message}
 
     const crateBoard = async (newBoard: newBoard) => {
-        const data = await execute<createBorder>(() => api.post('createBoard', newBoard , {
+        const data = await execute<messageBoarde>(() => api.post('createBoard', newBoard , {
             withCredentials: true,
         }), states)
 
@@ -68,6 +68,30 @@ export const useBoardStore = defineStore('boardStore', () => {
         return members.value
     }
 
+    const deleteBoard = async (id: number | string): Promise<boolean> => {
+        const data = await execute<messageBoarde>(() => api.delete(`boards/${id}`, {
+            withCredentials: true,
+        }), states)
+
+        if (data !== null) {
+            message.value = data.message
+        }
+
+        return data !== null
+    }
+
+    const deleteUserInBoarde = async (boardId: number | string, userId: number | string): Promise<boolean> => {
+        const data = await execute<messageBoarde>(() => api.delete(`boards/${boardId}/members/${userId}`, {
+            withCredentials: true,
+        }), states)
+
+        if (data !== null) {
+            message.value = data.message
+        }
+
+        return data !== null
+    }
+
     return {
         boards,
         currentBoard,
@@ -76,9 +100,11 @@ export const useBoardStore = defineStore('boardStore', () => {
         error,
         message,
         crateBoard,
+        deleteBoard,
         getAll,
         getOneBoard,
         getBoardMembers,
+        deleteUserInBoarde,
         statistic
     }
 })

@@ -1,7 +1,7 @@
 @use '../../assets/css/variables.scss' as *;
 
 .board-page {
-    width: min(1180px, 100%);
+    width: min(1360px, 100%);
     margin: 0 auto;
     padding: clamp(36px, 6vw, 72px) clamp(20px, 5vw, 56px) 72px;
 
@@ -95,6 +95,18 @@
     flex-wrap: wrap;
   }
 
+  &__delete-board {
+    color: #fecaca;
+    border-color: rgba(248, 113, 113, .32);
+    background: rgba(248, 113, 113, .09);
+
+    &:hover {
+      color: #fee2e2;
+      border-color: rgba(248, 113, 113, .46);
+      background: rgba(248, 113, 113, .15);
+    }
+  }
+
   &__dropdown-description {
     margin: 9px 0 0;
     color: $text-muted;
@@ -164,6 +176,26 @@
     border-radius: 6px;
   }
 
+  &__member-remove {
+    flex: 0 0 auto;
+    padding: 4px 7px;
+    color: #fecaca;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    background: rgba(248, 113, 113, .08);
+    border: 1px solid rgba(248, 113, 113, .22);
+    border-radius: 6px;
+    transition: color .2s ease, background .2s ease, border-color .2s ease;
+
+    &:hover {
+      color: #fee2e2;
+      background: rgba(248, 113, 113, .14);
+      border-color: rgba(248, 113, 113, .36);
+    }
+  }
+
   &__members-empty {
     margin: 14px 0 0;
     padding: 12px;
@@ -176,51 +208,12 @@
     border-radius: 10px;
   }
 
-  &__panel {
-    background: linear-gradient(145deg, rgba(21, 43, 68, .72), rgba(10, 23, 42, .68));
-    border: 1px solid rgba(148, 163, 184, .14);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, .12);
-  }
-
-  &__panel-heading {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    justify-content: space-between;
-  }
-
   &__layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 24px;
     align-items: stretch;
     margin-top: 28px;
-  }
-
-  &__panel {
-    flex: 1;
-    min-width: 0;
-    padding: clamp(20px, 4vw, 30px);
-    border-radius: 20px;
-
-    &--tasks .board-page__placeholder {
-      min-height: 330px;
-    }
-  }
-
-  &__placeholder {
-    display: grid;
-    min-height: 200px;
-    margin-top: 22px;
-    padding: 20px;
-    color: $text-muted;
-    font-size: 14px;
-    line-height: 1.6;
-    text-align: center;
-    place-items: center;
-    background: rgba(7, 17, 31, .32);
-    border: 1px dashed rgba(125, 211, 252, .2);
-    border-radius: 14px;
   }
 
   &__form {
@@ -265,14 +258,6 @@
       align-self: flex-start;
     }
 
-    &__panel-heading {
-      align-items: stretch;
-      flex-direction: column;
-
-      .ui-button {
-        align-self: flex-start;
-      }
-    }
 
     .ui-dropdown__menu {
       right: auto;
@@ -282,3 +267,4 @@
 
   }
 }
+

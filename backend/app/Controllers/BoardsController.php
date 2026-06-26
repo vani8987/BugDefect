@@ -14,6 +14,7 @@ interface BoardsControllerInterface {
     public function createBoard();
     public function getAllBoards();
     public function getBoard(string $boardId);
+    public function deleteBoard(string $boardId);
 }
 
 class BoardsController extends Controller implements BoardsControllerInterface {
@@ -91,6 +92,59 @@ class BoardsController extends Controller implements BoardsControllerInterface {
         $this->response->json([
             'message' => 'boards created'
         ], 201);
+    }
+
+    public function deleteBoard(string $boardId) {
+        $user_id = $this->request->getDataSession('auth_user_id');
+
+        if (!$this->validate(
+            filter_var($user_id, FILTER_VALIDATE_INT) !== false && (int) $user_id > 0,
+            'Unauthorized.',
+            401
+        )) {
+            return;
+        }
+
+        if (!$this->validate(
+            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
+            'Board ID must be a positive number.',
+            422
+        )) {
+            return;
+        }
+
+        $boardId = (int) $boardId;
+        $board = $this->boards->find(['id'], $boardId);
+
+        if (!$this->validate($board !== null, 'Board was not found.', 404)) {
+            return;
+        }
+
+        $is_admin = $this->boardsMember->checkRoleAdmin($boardId);
+
+        if (!$this->validate($is_admin, 'Only the board administrator can delete the board.', 403)) {
+            return;
+        }
+
+        $allMembers = $this->boardsMember->findAll(['user_id'], 'board_id', $boardId);
+
+        foreach($allMembers as $member) {
+            $memberDeleted = $this->boardsMember->deleteBoardMember($boardId, (int) $member['user_id']);
+
+            if (!$this->validate($memberDeleted, 'Unable to delete board member.', 500)) {
+                return;
+            }
+        }
+
+        $boardDeleted = $this->boards->delete($boardId);
+
+        if (!$this->validate($boardDeleted, 'Unable to delete board.', 500)) {
+            return;
+        }
+
+        $this->response->json([
+            'message' => 'Board deleted successfully.',
+        ], 200);
     }
 
     public function getAllBoards() {

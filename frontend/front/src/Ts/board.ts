@@ -36,6 +36,6 @@ export interface newBoard {
     description?: string
 }
 
-export interface createBorder{
+export interface messageBoarde{
     message: string
 }
