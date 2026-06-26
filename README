@@ -1,46 +1,83 @@
-# Bug Tracking System (PHP + Vue + Docker)
+﻿# BugDefect
 
-Полноценная система управления багами, построенная на:
-- чистом PHP backend (с кастомным CLI)
-- Vue 3 frontend (Vite)
-- MySQL
-- Docker для окружения
+BugDefect - система для работы с досками, участниками, дефектами и уведомлениями. Проект состоит из PHP API, Vue 3 SPA и MySQL, а для локального запуска используется Docker Compose.
 
----
+## Стек
 
-## 🚀 Быстрый старт
+- Backend: PHP 8.3, собственный мини-фреймворк, PDO, сессии, миграции.
+- Frontend: Vue 3, TypeScript, Vite, Pinia, Vue Router, Axios.
+- Database: MySQL 8.
+- Dev environment: Docker Compose.
 
-### 1. Клонировать проект
+## Быстрый старт через Docker
 
 ```bash
-git clone <repo-url>
-cd bugDefectProgect
 docker compose up --build
-docker compose up
 ```
 
-## Доступ к сервисам
+После запуска сервисы доступны здесь:
 
-Frontend Vue
-http://localhost:5173
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000/api`
+- MySQL: `localhost:3307`
 
-Backend PHP API
-http://localhost:8000
+Миграции нужно запускать отдельно:
 
+```bash
+docker compose exec backend php command.php migrate:run
+```
 
-## Архитектура проекта
+## Локальный запуск без Docker
 
-bugDefectProgect/
-│
-├── backend/        # PHP API + CLI + core framework
-│   ├── Core/
-│   ├── Controllers/
-│   ├── Models/
-│   ├── database/
-│   └── public/
-│
-├── frontend/
-│   └── front/      # Vue 3 + Vite SPA
-│
-├── docker-compose.yml
-└── README.md
+Backend:
+
+```bash
+cd backend
+composer install
+cp .env.example .env
+php command.php migrate:run
+php command.php serve
+```
+
+Frontend:
+
+```bash
+cd frontend/front
+npm install
+npm run dev
+```
+
+Для локального запуска backend должен быть доступен на `http://localhost:8000`, потому что frontend использует этот адрес в `src/utils/api.ts`.
+
+## Структура проекта
+
+```text
+backend/          PHP API, контроллеры, модели, роуты, миграции
+frontend/front/   Vue 3 SPA
+docker-compose.yml
+README
+```
+
+## Основные возможности
+
+- Регистрация, вход, выход и получение текущего пользователя.
+- Рабочая зона с досками пользователя.
+- Просмотр доски и участников.
+- Приглашение пользователя на доску.
+- Уведомления о приглашениях и отметка уведомлений прочитанными.
+
+## Полезные команды
+
+```bash
+docker compose up --build
+docker compose down
+docker compose exec backend php command.php migrate:run
+docker compose exec backend php command.php migrate:fresh
+docker compose exec frontend npm run build
+```
+
+Подробности по частям проекта:
+
+- Backend: `backend/README.md`
+- Frontend: `frontend/front/README.md`
+- Идеи и roadmap: `IDEAS.md`

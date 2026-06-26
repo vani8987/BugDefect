@@ -1,132 +1,103 @@
-# Mini Framework
+﻿# BugDefect Backend
 
-Небольшой PHP-фреймворк с роутингом, JSON-ответами, запросами, PDO,
-миграциями, логированием и сессионной авторизацией.
+Backend - PHP API на собственном мини-фреймворке. Он отвечает за авторизацию, доски, участников, приглашения, уведомления и работу с MySQL.
 
-## Авторизация
+## Стек
 
-Фреймворк включает авторизацию на основе сессий, защищённые маршруты и
-контракт модели для поиска пользователей. Описание находится в
-[документации по авторизации](docs/auth.md).
+- PHP 8.3
+- PDO MySQL
+- Composer autoload PSR-4
+- `vlucas/phpdotenv`
+- Собственные классы `Router`, `Request`, `Response`, `CRUD`, `MigrationManager`
 
-Рабочая демонстрация находится в `app/Controllers/AuthController.php`,
-`Routes/api.php` и `database/Migrations/002_CreateUsers.php`.
+## Запуск через Docker
 
-## Возможности
+Из корня проекта:
 
-- `Router` для URL-маршрутов с параметрами;
-- `Request` для данных из `POST`, query-параметров, cookie, сессии и JSON;
-- `Response` для JSON-ответов;
-- `ConnectDB`, `CRUD` и `CreateTable` для MySQL через PDO;
-- `MigrationManager` с историей миграций;
-- `Logger` с файлами в `log/`.
+```bash
+docker compose up --build
+docker compose exec backend php command.php migrate:run
+```
 
-## CORS
+API будет доступен на `http://localhost:8000/api`.
 
-Точка входа разрешает запросы с любого origin, чтобы пример API было удобно
-проверять через браузер. Перед production-развёртыванием замени `*` в
-`public/index.php` на адреса разрешённых клиентов.
-
-## Установка для разработки
+## Локальный запуск
 
 ```bash
 composer install
-```
-
-После добавления новых классов или изменения PSR-4 namespace обнови autoload:
-
-```bash
-composer dump-autoload
-```
-
-Создай `.env` из `.env.example`, укажи параметры MySQL и создай базу данных.
-После этого можно запускать миграции:
-
-```bash
+cp .env.example .env
 php command.php migrate:run
-```
-
-Повторный запуск применит только новые миграции.
-
-Локальный сервер:
-
-```bash
 php command.php serve
 ```
 
-## Установка через Composer
-новый API-проект можно создать одной командой:
+Команда `serve` запускает PHP dev server на `http://localhost:8000`.
+
+## Переменные окружения
+
+Файл `.env.example` содержит базовый шаблон:
+
+```env
+APP_NAME=BugDefect
+APP_ENV=dev
+APP_DEBUG=true
+
+DB=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_NAME=bug_defect
+DB_USER=root
+DB_PASSWORD=
+
+HASH_KEY_PASSWORD=replace_with_a_long_random_secret
+```
+
+Для Docker используется хост `mysql` и порт `3306` внутри сети контейнеров. Для запуска без Docker укажи параметры своей локальной MySQL.
+
+## Команды
 
 ```bash
-composer create-project vani8987/mini-framework project-name
+php command.php migrate:run      # применить новые миграции
+php command.php migrate:down     # откатить последнюю миграцию
+php command.php migrate:fresh    # пересоздать базу миграциями
+php command.php serve            # запустить API сервер
+composer dump-autoload           # обновить autoload после новых классов
 ```
 
-## Демонстрационное API авторизации
+## Основные маршруты
 
-Сначала запусти миграции, которые создадут таблицу `users`:
+```text
+POST   /api/register
+POST   /api/login
+POST   /api/logout
+GET    /api/me
 
-```bash
-php command.php migrate:run
+POST   /api/createBoard
+GET    /api/boards
+GET    /api/boards/{boardId}
+GET    /api/boards/{boardId}/members
+POST   /api/board/{boardId}/invite
+
+GET    /api/notifications
+PATCH  /api/notifications/read
 ```
 
-В консоли браузера зарегистрируй пользователя:
-
-```js
-fetch('/auth/register', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email: 'user@example.com',
-    password: 'secret',
-  }),
-})
-  .then((response) => response.json())
-  .then((data) => console.log(data));
-```
-
-Выполни вход:
-
-```js
-fetch('/auth/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email: 'user@example.com',
-    password: 'secret',
-  }),
-})
-  .then((response) => response.json())
-  .then((data) => console.log(data));
-```
-
-Получи данные текущего пользователя:
-
-```js
-fetch('/auth/me')
-  .then((response) => response.json())
-  .then((data) => console.log(data));
-```
-
-Когда JavaScript и API работают на одном домене и порту, браузер сам отправит
-cookie сессии после входа.
-
-Доступны маршруты `POST /auth/register`, `POST /auth/login`,
-`GET /auth/me` и `POST /auth/logout`.
+Защищённые маршруты используют сессию пользователя.
 
 ## Структура
 
-```text
-Core/                 Классы фреймворка
-app/                  Контроллеры API-приложения
-Routes/               Регистрация маршрутов приложения
-database/Migrations/  Миграции приложения
-docs/                 Документация классов
-log/                  Логи времени выполнения
-public/               HTTP-точка входа
+```
+app/Controllers/       контроллеры API
+app/Models/            модели таблиц
+Core/                  ядро мини-фреймворка
+database/Migrations/   миграции таблиц
+Routes/api.php         регистрация API маршрутов
+public/index.php       HTTP entrypoint и CORS
+log/                   runtime логи
+docs/                  дополнительная документация ядра
 ```
 
-Подробности находятся в [docs/README.md](docs/README.md).
+## База данных
 
-## Лицензия
+Миграции создают роли, пользователей, доски, участников досок, статусы, дефекты, уведомления и приглашения на доску.
 
-Проект распространяется по лицензии [MIT](LICENSE).
+Приглашения хранятся в `board_invites` со статусом `pending`, `accepted` или `declined`. Уведомления хранятся отдельно в `notification` и могут ссылаться на приглашение через JSON-поле `data`.

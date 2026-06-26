@@ -1,42 +1,74 @@
-# front
+﻿# BugDefect Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Frontend - Vue 3 SPA для BugDefect. Приложение показывает рабочую зону, доски, участников, приглашения и уведомления.
 
-## Recommended IDE Setup
+## Стек
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Vue 3
+- TypeScript
+- Vite
+- Pinia
+- Vue Router
+- Axios
+- Sass
+- vue-icons-plus
 
-## Recommended Browser Setup
+## Запуск через Docker
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Из корня проекта:
 
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```bash
+docker compose up --build
 ```
 
-### Compile and Hot-Reload for Development
+Frontend будет доступен на `http://localhost:5173`.
 
-```sh
+## Локальный запуск
+
+```bash
+npm install
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+По умолчанию API вызывается по адресу `http://localhost:8000/api`. Базовый URL находится в `src/utils/api.ts`.
 
-```sh
-npm run build
+## Скрипты
+
+```bash
+npm run dev          # dev server Vite
+npm run build        # type-check и production build
+npm run build-only   # только Vite build
+npm run type-check   # проверка TypeScript/Vue
+npm run preview      # preview production build
+npm run format       # форматирование src через Prettier
 ```
+
+## Структура
+
+```
+src/components/      переиспользуемые компоненты
+src/components/ui/   базовые UI-компоненты
+src/router/          маршруты Vue Router
+src/stores/          Pinia stores
+src/Ts/              TypeScript-типы
+src/utils/           API client и утилиты
+src/views/           страницы приложения
+src/assets/          глобальные стили и ассеты
+```
+
+## Основные страницы
+
+- `/login` - вход в аккаунт.
+- `/register` - регистрация.
+- `/workspace` - рабочая зона с досками.
+- `/boards/:boardId` - страница конкретной доски.
+
+## Авторизация и API
+
+Axios настроен с `withCredentials: true`, поэтому frontend отправляет session cookie вместе с запросами. Защищённые маршруты проверяются через `authStore.me()` в router guard.
+
+Если backend недоступен или запрос авторизации ещё выполняется, корневой `App.vue` показывает глобальный loader.
+
+## Уведомления
+
+Уведомления загружаются через `NotificationStore`. После открытия и закрытия меню уведомлений frontend вызывает `PATCH /api/notifications/read`, чтобы отметить уведомления прочитанными.
