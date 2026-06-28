@@ -214,4 +214,56 @@ class StatusesController extends Controller {
             'message' => 'position updated'
         ], 200);
     }
+
+    public function deleteStatus(string $boardId, string $statusId) {
+        $user_id = $this->request->getDataSession('auth_user_id');
+
+        if (!$this->validate(
+            filter_var($user_id, FILTER_VALIDATE_INT) !== false && (int) $user_id > 0,
+            'Unauthorized.',
+            401
+        )) {
+            return;
+        }
+
+        if (!$this->validate(
+            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
+            'Board ID must be a positive number.',
+            422
+        )) {
+            return;
+        }
+
+        if (!$this->validate(
+            filter_var($statusId, FILTER_VALIDATE_INT) !== false && (int) $statusId > 0,
+            'Status ID must be a positive number.',
+            422
+        )) {
+            return;
+        }
+
+        $boardId = (int) $boardId;
+        $statusId = (int) $statusId;
+        $board = $this->boards->find(['id'], $boardId);
+
+        if (!$this->validate($board !== null, 'Board was not found.', 404)) {
+            return;
+        }
+
+        $is_admin = $this->boardsMember->checkRoleAdmin($boardId);
+
+        if (!$this->validate($is_admin, 'Only the board administrator can delete statuses.', 403)) {
+            return;
+        }
+
+        $statusDeleted = $this->statuses->deleteByBoardAndStatus($boardId, $statusId);
+
+        if (!$this->validate($statusDeleted, 'Unable to delete status.', 500)) {
+            return;
+        }
+
+        $this->response->json([
+            'message' => 'Status deleted successfully.',
+        ], 200);
+    }
 }

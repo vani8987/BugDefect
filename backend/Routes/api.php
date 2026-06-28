@@ -33,3 +33,4 @@ Router::route('/api/boards/{boardId}/invite/reject', 'POST', [NotificationContro
 Router::route('/api/status/{boardId}', "GET", [StatusesController::class, 'getAll'], true);
 Router::route('/api/status/{boardId}', "POST", [StatusesController::class, 'createStatuses'], true);
 Router::route('/api/status/{boardId}/position', "PATCH", [StatusesController::class, 'updatePosition'], true);
+Router::route('/api/status/{boardId}/{statusId}', "DELETE", [StatusesController::class, 'deleteStatus'], true);

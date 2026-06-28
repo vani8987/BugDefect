@@ -36,6 +36,7 @@
         @start-drag="dragStart"
         @drop-column="dropColumn"
         @drag-end="dragEnd"
+        @delet-status="deleteStatus"
       />
     </div>
 
@@ -69,6 +70,7 @@ const emit = defineEmits<{
   (e: 'addStatus'): void
   (e: 'dragStart', value: number): void
   (e: 'dropColumn', value: number): void
+  (e: 'deleteStatus', value: number): void
   (e: 'dragEnd'): void
 }>()
 
@@ -80,9 +82,14 @@ function dropColumn(value: number): void {
   emit('dropColumn', value)
 }
 
+function deleteStatus(value: number): void {
+  emit('deleteStatus', value)
+}
+
 function dragEnd(): void {
   emit('dragEnd')
 }
+
 </script>
 
 <style src="./board-panel.scss" lang="scss" />

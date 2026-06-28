@@ -84,9 +84,9 @@
     </UiStats>
 
     <div class="board-page__layout">
-      <div v-if="isInitialStatusLoading" class="workspace-page__loading">
+      <div v-if="isInitialStatusLoading || isDeletingStatus" class="workspace-page__loading">
         <span class="workspace-page__spinner" />
-        Загрузка статусов...
+        {{ isDeletingStatus ? 'Удаление статуса...' : 'Загрузка статусов...' }}
       </div>
 
       <BoardPanel
@@ -98,6 +98,7 @@
         @drag-start="startDrag"
         @drop-column="dropColumn"
         @drag-end="dragEnd"
+        @delete-status="deleteStatus"
       />
     </div>
 
@@ -107,7 +108,7 @@
       title="Создание дефекта"
       @close="closeCreateDefectModal"
     >
-      <form class="board-page__form" @submit.prevent="createStatus">
+      <form class="board-page__form" @submit.prevent>
         <UiInput
           v-model="defectDraft.title"
           label="Название"
@@ -123,8 +124,24 @@
           :maxlength="1000"
         />
         <UiSelect v-model="defectDraft.status" label="Начальный статус">
-          <option value="new">Новый</option>
-          <option value="in_progress">В работе</option>
+          <option selected value="empty">выберете статус</option>
+          <option 
+            v-for="status in statusStore.boardColumns"
+            :key="status.id"
+            :value="status.id"
+          >
+          {{status.title}}
+          </option>
+        </UiSelect>
+        <UiSelect v-model="defectDraft.assigned_user_id" label="Исполнитель">
+          <option value="empty">Выберите исполнителя</option>
+          <option
+            v-for="member in boardStore.members"
+            :key="member.id"
+            :value="member.id"
+          >
+            {{ member.name }} — {{ member.email }}
+          </option>
         </UiSelect>
         <div class="board-page__form-actions">
           <UiButton variant="secondary" @click="closeCreateDefectModal">Отмена</UiButton>
@@ -223,13 +240,15 @@ const isCreateDefectModalOpen = ref(false)
 const isAddMemberModalOpen = ref(false)
 const isCreateStatusModalOpen = ref(false)
 const isInitialStatusLoading = ref(false)
+const isDeletingStatus = ref(false)
 
 const fromColumn = ref<number | null>(null)
 const toColumn = ref<number | null>(null)
 const defectDraft = ref({
   title: '',
   description: '',
-  status: 'new',
+  status: 'empty',
+  assigned_user_id: 'empty',
 })
 const statusDraft = ref({
   title: '',
@@ -331,6 +350,17 @@ const dropColumn = async (id: number): Promise<void> => {
   }
 }
 
+async function deleteStatus(value: number) {
+  isDeletingStatus.value = true
+
+  try {
+    await statusStore.deleteStatus(boardId.value, value)
+    await statusStore.getAll(boardId.value)
+  } finally {
+    isDeletingStatus.value = false
+  }
+}
+
 async function loadBoard(): Promise<void> {
   isInitialStatusLoading.value = true
 
@@ -345,7 +375,7 @@ async function loadBoard(): Promise<void> {
 
 function closeCreateDefectModal(): void {
   isCreateDefectModalOpen.value = false
-  defectDraft.value = { title: '', description: '', status: 'new' }
+  defectDraft.value = { title: '', description: '', status: 'empty', assigned_user_id: 'empty' }
 }
 
 function closeAddMemberModal(): void {

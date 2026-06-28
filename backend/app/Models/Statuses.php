@@ -70,4 +70,22 @@ class Statuses extends CRUD {
             return false;
         }
     }
+
+    public function deleteByBoardAndStatus(int $boardId, int $statusId): bool
+    {
+        try {
+            $statement = $this->pdo->prepare("
+                DELETE FROM statuses
+                WHERE board_id = ?
+                AND id = ?
+            ");
+
+            $statement->execute([$boardId, $statusId]);
+
+            return $statement->rowCount() > 0;
+        } catch (Exception $err) {
+            $this->logger->error('Delete status failed: ' . $err->getMessage());
+            return false;
+        }
+    }
 }

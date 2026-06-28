@@ -28,7 +28,19 @@
           <span>{{ column.description }}</span>
         </div>
       </div>
-      <strong>{{ column.items.length }}</strong>
+      <div class="status-column__actions">
+        <strong>{{ column.items.length }}</strong>
+        <button
+          v-if="canManage"
+          class="status-column__delete"
+          type="button"
+          aria-label="Удалить статус"
+          title="Удалить статус"
+          @click="deletStatus"
+        >
+          ×
+        </button>
+      </div>
     </header>
 
     <div class="status-column__items">
@@ -57,6 +69,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'startDrag', value: number): void
   (e: 'dropColumn', value: number): void
+  (e: 'deletStatus', value: number): void
   (e: 'dragEnd'): void
 }>()
 
@@ -72,6 +85,10 @@ function startDrag(event: DragEvent): void {
 
 function dropColumn(): void {
   emit('dropColumn', props.column.id)
+}
+
+function deletStatus(): void {
+  emit('deletStatus', props.column.id)
 }
 </script>
 

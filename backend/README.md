@@ -82,6 +82,7 @@ POST   /api/board/{boardId}/invite
 GET    /api/status/{boardId}
 POST   /api/status/{boardId}
 PATCH  /api/status/{boardId}/position
+DELETE /api/status/{boardId}/{statusId}
 
 GET    /api/notifications
 PATCH  /api/notifications/read
@@ -133,8 +134,9 @@ POST   /api/boards/{boardId}/invite/reject
 - `GET /api/status/{boardId}` - получить статусы доски с сортировкой по `position`;
 - `POST /api/status/{boardId}` - создать статус с `title`, `description` и `position`;
 - `PATCH /api/status/{boardId}/position` - сохранить новый порядок статусов.
+- `DELETE /api/status/{boardId}/{statusId}` - удалить статус конкретной доски.
 
-Создавать статусы и менять порядок может только администратор доски. Получать список статусов может любой участник доски.
+Создавать, удалять и менять порядок статусов может только администратор доски. Получать список статусов может любой участник доски.
 
 ## Структура
 

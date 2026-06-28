@@ -51,6 +51,18 @@ export const useStatusesStore = defineStore('statusesStore', () => {
         return data !== null
     }
 
+    const deleteStatus = async (boardId: number, statusId: number): Promise<boolean> => {
+        const data = await execute<ApiMessage>(() => api.delete(`/status/${boardId}/${statusId}`, {
+            withCredentials: true,
+        }), states)
+
+        if (data !== null) {
+            message.value = data.message
+        }
+
+        return data !== null
+    }
+
     return {
         boardColumns,
         loading,
@@ -58,6 +70,7 @@ export const useStatusesStore = defineStore('statusesStore', () => {
         message,
         getAll,
         createStatus,
+        deleteStatus,
         updatePosition
     }
 })
