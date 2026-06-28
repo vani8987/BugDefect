@@ -79,6 +79,10 @@ GET    /api/boards/{boardId}/members
 DELETE /api/boards/{boardId}/members/{userId}
 POST   /api/board/{boardId}/invite
 
+GET    /api/status/{boardId}
+POST   /api/status/{boardId}
+PATCH  /api/status/{boardId}/position
+
 GET    /api/notifications
 PATCH  /api/notifications/read
 POST   /api/boards/{boardId}/invite/accept
@@ -119,6 +123,18 @@ POST   /api/boards/{boardId}/invite/reject
 ```
 
 Перед изменением данных контроллер проверяет авторизацию, существование приглашения, принадлежность приглашения текущему пользователю и статус `pending`.
+
+## Статусы доски
+
+Статусы относятся к конкретной доске и хранят порядок через поле `position`.
+
+Поддерживаются действия:
+
+- `GET /api/status/{boardId}` - получить статусы доски с сортировкой по `position`;
+- `POST /api/status/{boardId}` - создать статус с `title`, `description` и `position`;
+- `PATCH /api/status/{boardId}/position` - сохранить новый порядок статусов.
+
+Создавать статусы и менять порядок может только администратор доски. Получать список статусов может любой участник доски.
 
 ## Структура
 

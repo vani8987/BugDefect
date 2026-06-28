@@ -1,4 +1,5 @@
 import axios, { type AxiosResponse } from 'axios'
+import type { ApiErrorResponse } from '@/Ts/api'
 import type { Ref } from 'vue'
 
 export interface RequestState {
@@ -8,7 +9,7 @@ export interface RequestState {
 }
 
 function getErrorMessage(error: unknown): string {
-  if (axios.isAxiosError<{ message?: string }>(error)) {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
     return error.response?.data?.message ?? 'Не удалось выполнить запрос. Попробуйте ещё раз.'
   }
 

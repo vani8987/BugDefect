@@ -10,10 +10,11 @@ class AddedGuestRole extends CRUD {
     }
 
     public function up(): void {
-        $created = $this->create(['id', 'name'], [1, 'guest']);
+        $guestRoleName = $_ENV['BOARD_ROLE_GUEST'] ?? getenv('BOARD_ROLE_GUEST') ?: 'guest';
+        $created = $this->create(['id', 'name'], [1, $guestRoleName]);
 
         if (!$created) {
-            throw new RuntimeException('Не удалось добавить роль guest.');
+            throw new RuntimeException("Unable to add the {$guestRoleName} role.");
         }
     }
 

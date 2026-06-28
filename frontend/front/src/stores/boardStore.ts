@@ -2,7 +2,8 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { execute, type RequestState } from "@/utils/execute";
 import { api } from "@/utils/api";
-import type { newBoard, messageBoarde, board, boardsResponse, oneBoardResponse, boardStatistic, boardMember, boardMembersResponse } from "@/Ts/board";
+import type { newBoard, board, boardsResponse, oneBoardResponse, boardStatistic, boardMember, boardMembersResponse } from "@/Ts/board";
+import type { ApiMessage } from "@/Ts/api";
 
 export const useBoardStore = defineStore('boardStore', () => {
     const boards = ref<board[]>([])
@@ -16,7 +17,7 @@ export const useBoardStore = defineStore('boardStore', () => {
     const states: RequestState = {loading, error, message}
 
     const crateBoard = async (newBoard: newBoard) => {
-        const data = await execute<messageBoarde>(() => api.post('createBoard', newBoard , {
+        const data = await execute<ApiMessage>(() => api.post('createBoard', newBoard , {
             withCredentials: true,
         }), states)
 
@@ -69,7 +70,7 @@ export const useBoardStore = defineStore('boardStore', () => {
     }
 
     const deleteBoard = async (id: number | string): Promise<boolean> => {
-        const data = await execute<messageBoarde>(() => api.delete(`boards/${id}`, {
+        const data = await execute<ApiMessage>(() => api.delete(`boards/${id}`, {
             withCredentials: true,
         }), states)
 
@@ -81,7 +82,7 @@ export const useBoardStore = defineStore('boardStore', () => {
     }
 
     const deleteUserInBoarde = async (boardId: number | string, userId: number | string): Promise<boolean> => {
-        const data = await execute<messageBoarde>(() => api.delete(`boards/${boardId}/members/${userId}`, {
+        const data = await execute<ApiMessage>(() => api.delete(`boards/${boardId}/members/${userId}`, {
             withCredentials: true,
         }), states)
 

@@ -84,11 +84,20 @@
     </UiStats>
 
     <div class="board-page__layout">
+      <div v-if="isInitialStatusLoading" class="workspace-page__loading">
+        <span class="workspace-page__spinner" />
+        Загрузка статусов...
+      </div>
+
       <BoardPanel
-        :columns="boardColumns"
+        v-else
+        :columns="statusStore.boardColumns"
         :can-manage="boardStore.currentBoard?.role === 'admin'"
         @add-defect="isCreateDefectModalOpen = true"
         @add-status="isCreateStatusModalOpen = true"
+        @drag-start="startDrag"
+        @drop-column="dropColumn"
+        @drag-end="dragEnd"
       />
     </div>
 
@@ -98,7 +107,7 @@
       title="Создание дефекта"
       @close="closeCreateDefectModal"
     >
-      <form class="board-page__form" @submit.prevent>
+      <form class="board-page__form" @submit.prevent="createStatus">
         <UiInput
           v-model="defectDraft.title"
           label="Название"
@@ -176,7 +185,7 @@
         />
         <div class="board-page__form-actions">
           <UiButton variant="secondary" @click="closeCreateStatusModal">Отмена</UiButton>
-          <UiButton type="submit">Создать статус</UiButton>
+          <UiButton type="submit" @click="createStatus" :disabled="statusStore.loading">Создать статус</UiButton>
         </div>
       </form>
     </UiModal>
@@ -195,23 +204,28 @@ import UiStats from '@/components/ui/stats/UiStats.vue'
 import UiStatCard from '@/components/ui/stat-card/UiStatCard.vue'
 import UiTextarea from '@/components/ui/textarea/UiTextarea.vue'
 import BoardPanel from '@/components/board-workspace/board-panel/BoardPanel.vue'
-import type { BoardStatusColumn } from '@/components/board-workspace/types'
 import { useBoardStore } from '@/stores/boardStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useInviteStore } from '@/stores/InviteStore'
+import { useStatusesStore } from '@/stores/statusesStore'
 import { getRoleLabel } from '@/Ts/role'
 import router from '@/router'
 
 const inviteStore = useInviteStore()
 const boardStore = useBoardStore()
 const authStore = useAuthStore()
+const statusStore = useStatusesStore()
 
 const route = useRoute()
-const boardId = computed(() => String(route.params.boardId))
+const boardId = computed(() => Number(route.params.boardId))
 const isParticipantsOpen = ref(false)
 const isCreateDefectModalOpen = ref(false)
 const isAddMemberModalOpen = ref(false)
 const isCreateStatusModalOpen = ref(false)
+const isInitialStatusLoading = ref(false)
+
+const fromColumn = ref<number | null>(null)
+const toColumn = ref<number | null>(null)
 const defectDraft = ref({
   title: '',
   description: '',
@@ -221,77 +235,12 @@ const statusDraft = ref({
   title: '',
   description: '',
 })
-const boardColumns: BoardStatusColumn[] = [
-  {
-    id: 'new',
-    title: 'Новые',
-    description: 'Ожидают разбора',
-    items: [
-      {
-        id: 1,
-        code: 'BUG-14',
-        title: 'Не открывается список участников',
-        description: 'При клике на кнопку участников меню иногда не появляется.',
-        priority: 'high',
-        assignee: 'Иван',
-        due: 'Сегодня',
-      },
-      {
-        id: 2,
-        code: 'BUG-18',
-        title: 'Счётчик уведомлений не обновляется',
-        description: 'После просмотра уведомлений бейдж остаётся активным.',
-        priority: 'medium',
-        assignee: 'Без исполнителя',
-        due: 'Завтра',
-      },
-    ],
-  },
-  {
-    id: 'in_progress',
-    title: 'В работе',
-    description: 'Исправляются сейчас',
-    items: [
-      {
-        id: 3,
-        code: 'BUG-21',
-        title: 'Повторный клик по приглашению',
-        description: 'Нужно блокировать повторное действие во время запроса.',
-        priority: 'medium',
-        assignee: 'Мария',
-        due: '2 дня',
-      },
-    ],
-  },
-  {
-    id: 'review',
-    title: 'Проверка',
-    description: 'Нужна проверка',
-    items: [
-      {
-        id: 4,
-        code: 'BUG-25',
-        title: 'Проверить статус приглашения',
-        description: 'После принятия или отказа кнопки должны исчезать.',
-        priority: 'low',
-        assignee: 'Алексей',
-        due: 'На неделе',
-      },
-    ],
-  },
-  {
-    id: 'done',
-    title: 'Готово',
-    description: 'Исправлено',
-    items: [],
-  },
-]
 const memberDraft = ref({
   email: '',
   role: 'developer',
 })
 const isLoading = computed(() => boardStore.loading)
-const errorMessage = computed(() => boardStore.error)
+const errorMessage = computed(() => boardStore.error || statusStore.error)
 const membersCount = computed(() => boardStore.currentBoard?.member_count ?? '—')
 const membersDescription = computed(() => isLoading.value ? 'Загружаем данные доски...' : 'Участники этой доски')
 const participantsView = computed(() => {
@@ -321,9 +270,77 @@ const boardView = computed(() => {
   }
 })
 
+const startDrag = (id: number): void => {
+  fromColumn.value = id
+}
+
+const resetDrag = (): void => {
+  fromColumn.value = null
+  toColumn.value = null
+}
+
+const dragEnd = (): void => {
+  resetDrag()
+}
+
+const dropColumn = async (id: number): Promise<void> => {
+  toColumn.value = id
+
+  if (fromColumn.value === null || toColumn.value === fromColumn.value) {
+    resetDrag()
+    return
+  }
+
+  const toIndex = statusStore.boardColumns.findIndex((column) => column.id === toColumn.value)
+  const fromIndex = statusStore.boardColumns.findIndex((column) => column.id === fromColumn.value)
+
+  if (fromIndex === -1 || toIndex === -1) {
+    resetDrag()
+    return
+  }
+
+  const savedColumns = statusStore.boardColumns.map((column) => ({
+    ...column,
+    items: [...column.items],
+  }))
+  const [fromColumnObj] = statusStore.boardColumns.splice(fromIndex, 1)
+
+  if (fromColumnObj === undefined) {
+    resetDrag()
+    return
+  }
+
+  statusStore.boardColumns.splice(toIndex, 0, fromColumnObj)
+
+  statusStore.boardColumns = statusStore.boardColumns.map((column, index) => ({
+    ...column,
+    position: index + 1,
+  }))
+
+  const statusPositions = statusStore.boardColumns.map((status) => ({
+    id: status.id,
+    position: status.position,
+  }))
+
+  resetDrag()
+
+  const isUpdated = await statusStore.updatePosition(boardId.value, { statuses: statusPositions })
+
+  if (!isUpdated) {
+    statusStore.boardColumns = savedColumns
+  }
+}
+
 async function loadBoard(): Promise<void> {
-  await boardStore.getOneBoard(boardId.value)
-  await boardStore.getBoardMembers(boardId.value)
+  isInitialStatusLoading.value = true
+
+  try {
+    await boardStore.getOneBoard(boardId.value)
+    await boardStore.getBoardMembers(boardId.value)
+    await statusStore.getAll(boardId.value)
+  } finally {
+    isInitialStatusLoading.value = false
+  }
 }
 
 function closeCreateDefectModal(): void {
@@ -341,6 +358,17 @@ function closeCreateStatusModal(): void {
   statusDraft.value = { title: '', description: '' }
 }
 
+async function createStatus(): Promise<void> {
+  const isCreated = await statusStore.createStatus(boardId.value, {
+    ...statusDraft.value,
+    position: statusStore.boardColumns.length + 1,
+  })
+
+  if (isCreated) {
+    closeCreateStatusModal()
+  }
+}
+
 async function deleteBoard(): Promise<void> {
   await boardStore.deleteBoard(boardId.value)
   router.push({name: 'workspace'})
@@ -348,7 +376,7 @@ async function deleteBoard(): Promise<void> {
 
 async function deleteMember(memberId: number): Promise<void> {
   await boardStore.deleteUserInBoarde(boardId.value, memberId)
-  await boardStore.getBoardMembers()
+  await boardStore.getBoardMembers(boardId.value)
 }
 
 onMounted(loadBoard)
@@ -360,4 +388,3 @@ watch(boardId, () => {
 </script>
 
 <style src="./BoardPage.scss" lang="scss" />
-

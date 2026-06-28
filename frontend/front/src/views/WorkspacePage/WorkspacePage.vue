@@ -46,7 +46,7 @@
         <UiButton variant="secondary">Все доски</UiButton>
       </div>
 
-      <div v-if="isLoading" class="workspace-page__loading">
+      <div v-if="isLoadingBoard" class="workspace-page__loading">
         <span class="workspace-page__spinner" />
         Загрузка досок...
       </div>
@@ -106,7 +106,7 @@
           <UiButton variant="secondary" @click="closeCreateModal">Отмена</UiButton>
           <UiButton
             type="submit"
-            :disabled="isBoardFormInvalid || isLoading"
+            :disabled="isBoardFormInvalid || isLoadingBoard"
           >
             {{ createButtonText }}
           </UiButton>
@@ -128,8 +128,10 @@ import UiStatCard from '@/components/ui/stat-card/UiStatCard.vue'
 import type { newBoard } from '@/Ts/board'
 import { validateForm } from '@/utils/validateForm'
 import { useBoardStore } from '@/stores/boardStore'
+import { useStatusesStore } from '@/stores/statusesStore'
 
 const boardStore = useBoardStore()
+const statusStore = useStatusesStore()
 
 const isCreateModalOpen = ref(false)
 
@@ -144,11 +146,12 @@ const boards = computed(() => boardStore.boards)
 const statistic = computed(() => boardStore.statistic)
 const boardsCount = computed(() => statistic.value?.boards_count ?? 0)
 const hasBoards = computed(() => boards.value.length > 0)
-const isLoading = computed(() => boardStore.loading)
+const isLoadingBoard = computed(() => boardStore.loading)
+
 const successMessage = computed(() => boardStore.message)
 const errorMessage = computed(() => boardStore.error)
 const isBoardFormInvalid = computed(() => !validateForm({ title: boardDraft.value.title }))
-const createButtonText = computed(() => isLoading.value ? 'Создаём...' : 'Создать доску')
+const createButtonText = computed(() => isLoadingBoard.value ? 'Создаём...' : 'Создать доску')
 
 function closeCreateModal(): void {
   isCreateModalOpen.value = false

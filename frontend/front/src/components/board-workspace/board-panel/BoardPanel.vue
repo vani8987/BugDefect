@@ -23,12 +23,34 @@
       </div>
     </div>
 
-    <div class="board-panel__kanban" aria-label="Доска дефектов">
+    <div
+      v-if="columns.length > 0"
+      class="board-panel__kanban"
+      aria-label="Доска дефектов"
+    >
       <StatusColumn
         v-for="column in columns"
         :key="column.id"
         :column="column"
+        :can-manage="canManage"
+        @start-drag="dragStart"
+        @drop-column="dropColumn"
+        @drag-end="dragEnd"
       />
+    </div>
+
+    <div v-else class="board-panel__empty">
+      <div class="board-panel__empty-icon">+</div>
+      <h3>Статусы ещё не созданы</h3>
+      <p>
+        Добавь первый статус, чтобы начать собирать рабочую доску и раскладывать дефекты по колонкам.
+      </p>
+      <UiButton
+        v-if="canManage"
+        @click="$emit('addStatus')"
+      >
+        Добавить статус
+      </UiButton>
     </div>
   </section>
 </template>
@@ -36,17 +58,31 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/button/UiButton.vue'
 import StatusColumn from '../status-column/StatusColumn.vue'
-import type { BoardStatusColumn } from '../types'
-
+import type { BoardStatusColumn } from '@/Ts/status'
 defineProps<{
   columns: BoardStatusColumn[]
   canManage: boolean
 }>()
 
-defineEmits<{
-  addDefect: []
-  addStatus: []
+const emit = defineEmits<{
+  (e: 'addDefect'): void
+  (e: 'addStatus'): void
+  (e: 'dragStart', value: number): void
+  (e: 'dropColumn', value: number): void
+  (e: 'dragEnd'): void
 }>()
+
+function dragStart(value: number): void {
+  emit('dragStart', value)
+}
+
+function dropColumn(value: number): void {
+  emit('dropColumn', value)
+}
+
+function dragEnd(): void {
+  emit('dragEnd')
+}
 </script>
 
 <style src="./board-panel.scss" lang="scss" />

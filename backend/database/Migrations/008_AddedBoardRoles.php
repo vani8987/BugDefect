@@ -14,7 +14,10 @@ class AddedBoardRoles extends CRUD
 
     public function up(): void
     {
-        $roles = ['admin', 'developer'];
+        $roles = [
+            $_ENV['BOARD_ROLE_ADMIN'] ?? getenv('BOARD_ROLE_ADMIN') ?: 'admin',
+            $_ENV['BOARD_ROLE_DEVELOPER'] ?? getenv('BOARD_ROLE_DEVELOPER') ?: 'developer',
+        ];
 
         foreach ($roles as $role) {
             if (!$this->create(['name'], [$role])) {

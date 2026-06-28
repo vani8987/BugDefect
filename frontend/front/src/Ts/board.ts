@@ -36,6 +36,3 @@ export interface newBoard {
     description?: string
 }
 
-export interface messageBoarde{
-    message: string
-}

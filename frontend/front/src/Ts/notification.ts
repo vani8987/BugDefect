@@ -17,7 +17,3 @@ interface dataInvite {
 export interface responseNotification {
     'notifications': notificationInvite[]
 }
-
-export interface responseNotificationMessage {
-    'message': string
-}

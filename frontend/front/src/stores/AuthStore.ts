@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type {
-  ApiMessage,
   CurrentUserResponse,
   LoginUser,
   RegisterUser,
   UserAuth,
 } from '@/Ts/user'
+import type { ApiMessage } from '@/Ts/api'
 import { api } from '@/utils/api'
 import {
   execute,

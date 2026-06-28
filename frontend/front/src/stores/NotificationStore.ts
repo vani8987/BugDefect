@@ -1,4 +1,5 @@
-import type { notificationInvite, responseNotification, responseNotificationMessage } from "@/Ts/notification";
+import type { notificationInvite, responseNotification } from "@/Ts/notification";
+import type { ApiMessage } from "@/Ts/api";
 import { api } from "@/utils/api";
 import { execute, type RequestState } from "@/utils/execute";
 import { defineStore } from "pinia";
@@ -35,7 +36,7 @@ export const useNotificationStore = defineStore('notificationStore', () => {
     }
 
     const updateAll = async () => {
-        const res = await execute<responseNotificationMessage>(
+        const res = await execute<ApiMessage>(
             () => api.patch('/notifications/read', {is_read: true}, {withCredentials: true}),
             states
         )
@@ -53,7 +54,7 @@ export const useNotificationStore = defineStore('notificationStore', () => {
     }
 
     const inviteClick = async (boardId: number, inviteId: number, mode: 'accept' | 'reject') => {
-        const res = await execute<responseNotificationMessage>(
+        const res = await execute<ApiMessage>(
             () => api.post(`/boards/${boardId}/invite/${mode}`, {invite_id: inviteId}, {withCredentials: true}),
             states
         )

@@ -15,14 +15,6 @@ export interface RegisterUser extends LoginUser {
   name: string
 }
 
-export interface ApiMessage {
-  message: string
-}
-
 export interface CurrentUserResponse {
   user: UserAuth
-}
-
-export interface ApiErrorResponse {
-  message?: string
 }

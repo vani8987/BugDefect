@@ -21,12 +21,14 @@ class BoardsController extends Controller implements BoardsControllerInterface {
     private Boards $boards;
     private BoardsMember $boardsMember;
     private Roles $roles;
+    private string $adminRoleName;
 
     function __construct(){
         $this->boards = new Boards();
         $this->request = new Request();
         $this->boardsMember = new BoardsMember();
         $this->roles = new Roles();
+        $this->adminRoleName = $_ENV['BOARD_ROLE_ADMIN'] ?? getenv('BOARD_ROLE_ADMIN') ?: 'admin';
         parent::__construct(new Logger('Board.log'), new Response(), new Request());
     }
 
@@ -74,7 +76,7 @@ class BoardsController extends Controller implements BoardsControllerInterface {
             return;
         }
 
-        $role = $this->roles->findOneBy(['id'], 'name', 'admin');
+        $role = $this->roles->findOneBy(['id'], 'name', $this->adminRoleName);
 
         if (!$this->validate($role !== null, 'Administrator role was not found.', 500)) {
             return;

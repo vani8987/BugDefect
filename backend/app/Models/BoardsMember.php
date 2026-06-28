@@ -9,10 +9,12 @@ use Core\Request;
 
 class BoardsMember extends CRUD {
     private Request $request;
+    private string $adminRoleName;
 
     function __construct(){
         $this->request = new Request();
         parent::__construct('board_member');
+        $this->adminRoleName = $_ENV['BOARD_ROLE_ADMIN'] ?? getenv('BOARD_ROLE_ADMIN') ?: 'admin';
     }
 
     public function getMembersWithRoles(int $boardId): array
@@ -60,7 +62,7 @@ class BoardsMember extends CRUD {
             return false;
         }
 
-        return $role['name'] === 'admin';
+        return $role['name'] === $this->adminRoleName;
     }
 
     public function findBoardMember(int $boardId, int $userId): ?array

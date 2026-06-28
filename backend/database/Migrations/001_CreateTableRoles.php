@@ -13,9 +13,12 @@ class CreateTableRoles extends CreateTable
 
     public function up(): void
     {
+        $guestRoleName = $_ENV['BOARD_ROLE_GUEST'] ?? getenv('BOARD_ROLE_GUEST') ?: 'guest';
+        $guestRoleName = str_replace("'", "''", $guestRoleName);
+
         $this->createTable([
             'id INT AUTO_INCREMENT PRIMARY KEY',
-            "name VARCHAR(50) NOT NULL UNIQUE DEFAULT 'guest'",
+            "name VARCHAR(50) NOT NULL UNIQUE DEFAULT '{$guestRoleName}'",
         ]);
     }
 

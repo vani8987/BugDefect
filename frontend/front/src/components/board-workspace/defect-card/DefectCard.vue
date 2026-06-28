@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { BoardDefectCard, DefectPriority } from '../types'
+import type { BoardDefectCard, DefectPriority } from '@/Ts/status'
 
 const props = defineProps<{
   item: BoardDefectCard

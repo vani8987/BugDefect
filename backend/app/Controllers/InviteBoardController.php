@@ -14,7 +14,7 @@ use App\Models\Notification;
 use App\Models\InviteBoardMember;
 
 interface InviteBoardControllerInterface {
-    public function addUser(int $boardsId);
+    public function addUser(string $boardsId);
 }
 
 class InviteBoardController extends Controller implements InviteBoardControllerInterface {
@@ -35,11 +35,16 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
         parent::__construct(new Logger('Board.log'), new Response(), new Request());
     }
 
-    public function addUser(int $boardsId) {
-        if (!$this->validate($boardsId > 0, 'Board id is invalid', 422)) {
+    public function addUser(string $boardsId) {
+        if (!$this->validate(
+            filter_var($boardsId, FILTER_VALIDATE_INT) !== false && (int) $boardsId > 0,
+            'Board id is invalid',
+            422
+        )) {
             return;
         }
 
+        $boardsId = (int) $boardsId;
         $board = $this->boards->find(['id'], $boardsId);
 
         if (!$this->validate($board !== null, 'Board not found', 404)) {
@@ -48,7 +53,7 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
 
         $is_admin = $this->boardsMember->checkRoleAdmin($boardsId);
 
-        if (!$this->validate($is_admin, 'User not admin', 422)) {
+        if (!$this->validate($is_admin, 'Only the board administrator can invite members.', 403)) {
             return;
         }
 
