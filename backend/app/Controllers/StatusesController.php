@@ -8,16 +8,19 @@ use Core\Request;
 
 use App\Models\Boards;
 use App\Models\BoardsMember;
+use App\Models\Defect;
 use App\Models\Statuses;
 
 class StatusesController extends Controller {
     private Boards $boards;
     private BoardsMember $boardsMember;
+    private Defect $defect;
     private Statuses $statuses;
 
     function __construct(){
         $this->boards = new Boards();
         $this->boardsMember = new BoardsMember();
+        $this->defect = new Defect();
         $this->statuses = new Statuses();
 
         parent::__construct(new Logger('Statuses.log'), new Response(), new Request());
@@ -132,7 +135,10 @@ class StatusesController extends Controller {
             return;
         }
 
-        $allStatuses = $this->statuses->findAllByBoard($boardId);
+        $allStatuses = array_map(function (array $status) use ($boardId) {
+            $status['items'] = $this->defect->findAllByBoardAndStatus($boardId, (int) $status['id']);
+            return $status;
+        }, $this->statuses->findAllByBoard($boardId));
 
         $this->response->json([
             'statuses' => $allStatuses

@@ -36,32 +36,14 @@
     font-weight: 800;
   }
 
-  &__priority {
+  &__executor {
     padding: 4px 7px;
-    color: $text-main;
+    color: #fde68a;
     font-size: 10px;
     font-weight: 800;
-    background: rgba(148, 163, 184, .1);
-    border: 1px solid rgba(148, 163, 184, .16);
+    background: rgba(245, 158, 11, .1);
+    border: 1px solid rgba(245, 158, 11, .22);
     border-radius: 999px;
-
-    &--high {
-      color: #fecaca;
-      background: rgba(248, 113, 113, .1);
-      border-color: rgba(248, 113, 113, .24);
-    }
-
-    &--medium {
-      color: #fde68a;
-      background: rgba(245, 158, 11, .1);
-      border-color: rgba(245, 158, 11, .22);
-    }
-
-    &--low {
-      color: #bfdbfe;
-      background: rgba(96, 165, 250, .1);
-      border-color: rgba(96, 165, 250, .22);
-    }
   }
 
   &__footer {

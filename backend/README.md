@@ -84,6 +84,8 @@ POST   /api/status/{boardId}
 PATCH  /api/status/{boardId}/position
 DELETE /api/status/{boardId}/{statusId}
 
+POST   /api/boards/{boardId}/defects
+
 GET    /api/notifications
 PATCH  /api/notifications/read
 POST   /api/boards/{boardId}/invite/accept
@@ -137,6 +139,18 @@ POST   /api/boards/{boardId}/invite/reject
 - `DELETE /api/status/{boardId}/{statusId}` - удалить статус конкретной доски.
 
 Создавать, удалять и менять порядок статусов может только администратор доски. Получать список статусов может любой участник доски.
+
+## Дефекты
+
+Дефекты относятся к доске и конкретному статусу. Порядок внутри статуса хранится через поле `position`.
+
+Поддерживается создание дефекта:
+
+- `POST /api/boards/{boardId}/defects` - создать дефект с `title`, необязательным `description`, `statusId` и `executorID`.
+
+При создании backend проверяет авторизацию, существование доски, права администратора, принадлежность статуса доске и принадлежность исполнителя участникам доски. Новая позиция рассчитывается как последняя позиция в статусе + 1.
+
+При получении статусов через `GET /api/status/{boardId}` backend добавляет дефекты внутрь каждого статуса в поле `items`.
 
 ## Структура
 

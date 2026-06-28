@@ -1,14 +1,17 @@
-export type DefectPriority = 'low' | 'medium' | 'high'
-
 export interface BoardDefectCard {
     id: number
-    code: string
     title: string
     description: string
-    priority: DefectPriority
-    assignee: string
-    due: string
+    executer_id: number
+    board_id: number
+    status_id: number
+    appointed_id: number
+    position: number
+    executer_name?: string
+    appointed_name?: string
 }
+
+export type DefectResponse = BoardDefectCard
 
 export interface BoardStatusColumn {
     id: number
@@ -24,6 +27,7 @@ export interface StatusResponse {
     title: string
     description: string
     position: number
+    items?: DefectResponse[]
 }
 
 export interface StatusesResponse {

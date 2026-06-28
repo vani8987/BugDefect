@@ -3,6 +3,7 @@
 use App\Controllers\AuthController;
 use App\Controllers\BoardMemberController;
 use App\Controllers\BoardsController;
+use App\Controllers\DefectsController;
 use App\Controllers\InviteBoardController;
 use App\Controllers\NotificationController;
 use App\Controllers\StatusesController;
@@ -34,3 +35,6 @@ Router::route('/api/status/{boardId}', "GET", [StatusesController::class, 'getAl
 Router::route('/api/status/{boardId}', "POST", [StatusesController::class, 'createStatuses'], true);
 Router::route('/api/status/{boardId}/position', "PATCH", [StatusesController::class, 'updatePosition'], true);
 Router::route('/api/status/{boardId}/{statusId}', "DELETE", [StatusesController::class, 'deleteStatus'], true);
+
+// дефекты
+Router::route('/api/boards/{boardId}/defects', 'POST', [DefectsController::class, 'createDefect'], true);

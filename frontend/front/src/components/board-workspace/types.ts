@@ -1,1 +1,1 @@
-export type { BoardDefectCard, BoardStatusColumn, DefectPriority } from '@/Ts/status'
+export type { BoardDefectCard, BoardStatusColumn } from '@/Ts/status'

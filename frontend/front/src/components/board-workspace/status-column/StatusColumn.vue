@@ -31,7 +31,7 @@
       <div class="status-column__actions">
         <strong>{{ column.items.length }}</strong>
         <button
-          v-if="canManage"
+          v-if="canManage && column.items.length === 0"
           class="status-column__delete"
           type="button"
           aria-label="Удалить статус"
@@ -58,6 +58,7 @@
 </template>
 
 <script setup lang="ts">
+import BoardCard from '@/components/board-card/BoardCard.vue';
 import DefectCard from '../defect-card/DefectCard.vue'
 import type { BoardStatusColumn } from '@/Ts/status'
 

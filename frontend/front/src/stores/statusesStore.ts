@@ -20,7 +20,7 @@ export const useStatusesStore = defineStore('statusesStore', () => {
         if (data !== null) {
             boardColumns.value = data.statuses.map((status) => ({
                 ...status,
-                items: [],
+                items: status.items ?? [],
             }))
         }
 

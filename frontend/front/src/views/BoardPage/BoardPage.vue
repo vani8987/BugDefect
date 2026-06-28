@@ -91,7 +91,7 @@
 
       <BoardPanel
         v-else
-        :columns="statusStore.boardColumns"
+        :columns="boardColumns"
         :can-manage="boardStore.currentBoard?.role === 'admin'"
         @add-defect="isCreateDefectModalOpen = true"
         @add-status="isCreateStatusModalOpen = true"
@@ -108,7 +108,7 @@
       title="Создание дефекта"
       @close="closeCreateDefectModal"
     >
-      <form class="board-page__form" @submit.prevent>
+      <form class="board-page__form" @submit.prevent="createDefect">
         <UiInput
           v-model="defectDraft.title"
           label="Название"
@@ -145,7 +145,7 @@
         </UiSelect>
         <div class="board-page__form-actions">
           <UiButton variant="secondary" @click="closeCreateDefectModal">Отмена</UiButton>
-          <UiButton type="submit">Создать дефект</UiButton>
+          <UiButton type="submit" :disabled="defectsStore.loading">Создать дефект</UiButton>
         </div>
       </form>
     </UiModal>
@@ -224,6 +224,7 @@ import BoardPanel from '@/components/board-workspace/board-panel/BoardPanel.vue'
 import { useBoardStore } from '@/stores/boardStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useInviteStore } from '@/stores/InviteStore'
+import { useDefectsStore } from '@/stores/defectsStore'
 import { useStatusesStore } from '@/stores/statusesStore'
 import { getRoleLabel } from '@/Ts/role'
 import router from '@/router'
@@ -231,6 +232,7 @@ import router from '@/router'
 const inviteStore = useInviteStore()
 const boardStore = useBoardStore()
 const authStore = useAuthStore()
+const defectsStore = useDefectsStore()
 const statusStore = useStatusesStore()
 
 const route = useRoute()
@@ -259,9 +261,22 @@ const memberDraft = ref({
   role: 'developer',
 })
 const isLoading = computed(() => boardStore.loading)
-const errorMessage = computed(() => boardStore.error || statusStore.error)
+const errorMessage = computed(() => boardStore.error || statusStore.error || defectsStore.error)
 const membersCount = computed(() => boardStore.currentBoard?.member_count ?? '—')
 const membersDescription = computed(() => isLoading.value ? 'Загружаем данные доски...' : 'Участники этой доски')
+const boardColumns = computed(() => statusStore.boardColumns.map((column) => ({
+  ...column,
+  items: column.items.map((defect) => {
+    const executor = boardStore.members.find((member) => member.id === defect.executer_id)
+    const appointed = boardStore.members.find((member) => member.id === defect.appointed_id)
+
+    return {
+      ...defect,
+      executer_name: executor?.name,
+      appointed_name: appointed?.name,
+    }
+  }),
+})))
 const participantsView = computed(() => {
   const items = boardStore.members.map((member) => ({
     ...member,
@@ -386,6 +401,27 @@ function closeAddMemberModal(): void {
 function closeCreateStatusModal(): void {
   isCreateStatusModalOpen.value = false
   statusDraft.value = { title: '', description: '' }
+}
+
+async function createDefect(): Promise<void> {
+  const statusId = Number(defectDraft.value.status)
+  const executorID = Number(defectDraft.value.assigned_user_id)
+
+  if (!Number.isInteger(statusId) || statusId <= 0 || !Number.isInteger(executorID) || executorID <= 0) {
+    return
+  }
+
+  const isCreated = await defectsStore.createDefect(boardId.value, {
+    title: defectDraft.value.title,
+    description: defectDraft.value.description,
+    statusId,
+    executorID,
+  })
+
+  if (isCreated) {
+    closeCreateDefectModal()
+    await statusStore.getAll(boardId.value)
+  }
 }
 
 async function createStatus(): Promise<void> {
