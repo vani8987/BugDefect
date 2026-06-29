@@ -181,4 +181,90 @@ class DefectsController extends Controller {
 
         return $allDefect;
     }
+
+    public function moveDefect(int $boardId, int $defectId) {
+        $userId = $this->request->getDataSession('auth_user_id');
+
+        if (!$this->validate(
+            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
+            'Unauthorized.',
+            401
+        )) {
+            return;
+        }
+
+        if (!$this->validate(
+            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
+            'Board id is invalid',
+            422
+        )) {
+            return;
+        }
+
+        if (!$this->validate(
+            filter_var($defectId, FILTER_VALIDATE_INT) !== false && (int) $defectId > 0,
+            'Defect id is invalid',
+            422
+        )) {
+            return;
+        }
+
+        $statusId = $this->request->getDataJson('statusId');
+        $position = $this->request->getDataJson('position');
+
+        if (!$this->validate(
+            filter_var($statusId, FILTER_VALIDATE_INT) !== false && (int) $statusId > 0,
+            'Status id is invalid',
+            422
+        )) {
+            return;
+        }
+
+        if (!$this->validate(
+            filter_var($position, FILTER_VALIDATE_INT) !== false && (int) $position > 0,
+            'Position is invalid',
+            422
+        )) {
+            return;
+        }
+
+        $boardId = (int) $boardId;
+        $defectId = (int) $defectId;
+        $statusId = (int) $statusId;
+        $position = (int) $position;
+
+        $board = $this->boards->find(['id'], $boardId);
+
+        if (!$this->validate($board !== null, 'Board not found', 404)) {
+            return;
+        }
+
+        $isAdmin = $this->boardsMember->checkRoleAdmin($boardId);
+
+        if (!$this->validate($isAdmin, 'Only the board administrator can move defects.', 403)) {
+            return;
+        }
+
+        $defect = $this->defect->findByBoardAndId($boardId, $defectId);
+
+        if (!$this->validate($defect !== null, 'Defect was not found in this board.', 404)) {
+            return;
+        }
+
+        $status = $this->statuses->findPositionByBoardAndStatus($boardId, $statusId);
+
+        if (!$this->validate($status !== null, 'Status was not found in this board.', 404)) {
+            return;
+        }
+
+        $updated = $this->defect->updatePositionByBoardAndId($boardId, $defectId, $statusId, $position);
+
+        if (!$this->validate($updated, 'Defect was not moved.', 500)) {
+            return;
+        }
+
+        $this->response->json([
+            'message' => 'Defect moved successfully.',
+        ], 200);
+    }
 }

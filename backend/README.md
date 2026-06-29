@@ -1,6 +1,6 @@
-﻿# BugDefect Backend
+# BugDefect Backend
 
-Backend - PHP API на собственном мини-фреймворке. Он отвечает за авторизацию, доски, участников, приглашения, уведомления и работу с MySQL.
+Backend - PHP API на собственном mini-framework. Он отвечает за авторизацию, доски, участников, приглашения, уведомления, статусы и дефекты.
 
 ## Стек
 
@@ -9,6 +9,7 @@ Backend - PHP API на собственном мини-фреймворке. О�
 - Composer autoload PSR-4
 - `vlucas/phpdotenv`
 - Собственные классы `Router`, `Request`, `Response`, `CRUD`, `MigrationManager`
+- Сессии для авторизации
 
 ## Запуск через Docker
 
@@ -34,7 +35,7 @@ php command.php serve
 
 ## Переменные окружения
 
-Файл `.env.example` содержит базовый шаблон:
+Базовый шаблон лежит в `backend/.env.example`.
 
 ```env
 APP_NAME=BugDefect
@@ -49,9 +50,13 @@ DB_USER=root
 DB_PASSWORD=
 
 HASH_KEY_PASSWORD=replace_with_a_long_random_secret
+
+BOARD_ROLE_ADMIN=admin
+BOARD_ROLE_DEVELOPER=developer
+BOARD_ROLE_GUEST=guest
 ```
 
-Для Docker используется хост `mysql` и порт `3306` внутри сети контейнеров. Для запуска без Docker укажи параметры своей локальной MySQL.
+Для Docker используется `DB_HOST=mysql` и порт `3306` внутри сети контейнеров. Для запуска без Docker нужно указать параметры локальной MySQL.
 
 ## Команды
 
@@ -85,6 +90,7 @@ PATCH  /api/status/{boardId}/position
 DELETE /api/status/{boardId}/{statusId}
 
 POST   /api/boards/{boardId}/defects
+PATCH  /api/boards/{boardId}/defects/{defectId}/move
 
 GET    /api/notifications
 PATCH  /api/notifications/read
@@ -102,30 +108,16 @@ POST   /api/boards/{boardId}/invite/reject
 
 - удалить доску через `DELETE /api/boards/{boardId}`;
 - удалить участника через `DELETE /api/boards/{boardId}/members/{userId}`;
-- отправить приглашение пользователю через `POST /api/board/{boardId}/invite`.
+- отправить приглашение пользователю через `POST /api/board/{boardId}/invite`;
+- управлять статусами и дефектами доски.
 
-Перед удалением backend проверяет авторизацию, валидность ID, существование записи и права администратора. При удалении доски сначала удаляются связи участников с доской, затем сама доска.
+Перед изменением данных backend проверяет авторизацию, валидность ID, существование записей и права администратора.
 
 ## Приглашения и уведомления
 
 При отправке приглашения backend создаёт запись в `board_invites` со статусом `pending` и уведомление типа `invite` для приглашённого пользователя.
 
-При получении уведомлений backend добавляет в `data.status` актуальный статус приглашения из `board_invites`. Благодаря этому frontend понимает, нужно ли показывать кнопки принятия/отклонения или только итоговую строку.
-
-Пользователь может обработать приглашение через уведомление:
-
-- `POST /api/boards/{boardId}/invite/accept` добавляет пользователя в `board_member`, меняет статус приглашения на `accepted` и отправляет уведомление пригласившему.
-- `POST /api/boards/{boardId}/invite/reject` меняет статус приглашения на `declined` и отправляет уведомление пригласившему.
-
-Оба маршрута принимают JSON:
-
-```json
-{
-  "invite_id": 1
-}
-```
-
-Перед изменением данных контроллер проверяет авторизацию, существование приглашения, принадлежность приглашения текущему пользователю и статус `pending`.
+При получении уведомлений backend добавляет в `data.status` актуальный статус приглашения из `board_invites`. Frontend по этому статусу показывает кнопки принятия/отклонения или итоговую строку.
 
 ## Статусы доски
 
@@ -133,10 +125,10 @@ POST   /api/boards/{boardId}/invite/reject
 
 Поддерживаются действия:
 
-- `GET /api/status/{boardId}` - получить статусы доски с сортировкой по `position`;
-- `POST /api/status/{boardId}` - создать статус с `title`, `description` и `position`;
-- `PATCH /api/status/{boardId}/position` - сохранить новый порядок статусов.
-- `DELETE /api/status/{boardId}/{statusId}` - удалить статус конкретной доски.
+- `GET /api/status/{boardId}` — получить статусы доски с сортировкой по `position` и вложенными дефектами в `items`;
+- `POST /api/status/{boardId}` — создать статус с `title`, `description` и `position`;
+- `PATCH /api/status/{boardId}/position` — сохранить новый порядок статусов;
+- `DELETE /api/status/{boardId}/{statusId}` — удалить статус конкретной доски.
 
 Создавать, удалять и менять порядок статусов может только администратор доски. Получать список статусов может любой участник доски.
 
@@ -144,20 +136,30 @@ POST   /api/boards/{boardId}/invite/reject
 
 Дефекты относятся к доске и конкретному статусу. Порядок внутри статуса хранится через поле `position`.
 
-Поддерживается создание дефекта:
+Поддерживаются действия:
 
-- `POST /api/boards/{boardId}/defects` - создать дефект с `title`, необязательным `description`, `statusId` и `executorID`.
+- `POST /api/boards/{boardId}/defects` — создать дефект с `title`, необязательным `description`, `statusId` и `executorID`;
+- `PATCH /api/boards/{boardId}/defects/{defectId}/move` — перенести дефект в другой статус и сохранить новую позицию.
 
 При создании backend проверяет авторизацию, существование доски, права администратора, принадлежность статуса доске и принадлежность исполнителя участникам доски. Новая позиция рассчитывается как последняя позиция в статусе + 1.
 
-При получении статусов через `GET /api/status/{boardId}` backend добавляет дефекты внутрь каждого статуса в поле `items`.
+При переносе дефекта backend проверяет авторизацию, доску, права администратора, принадлежность дефекта доске, принадлежность целевого статуса доске и валидность новой позиции.
+
+Тело запроса переноса:
+
+```json
+{
+  "statusId": 2,
+  "position": 1
+}
+```
 
 ## Структура
 
-```
+```text
 app/Controllers/       контроллеры API
 app/Models/            модели таблиц
-Core/                  ядро мини-фреймворка
+Core/                  ядро mini-framework
 database/Migrations/   миграции таблиц
 Routes/api.php         регистрация API маршрутов
 public/index.php       HTTP entrypoint и CORS
@@ -169,4 +171,12 @@ docs/                  дополнительная документация я�
 
 Миграции создают роли, пользователей, доски, участников досок, статусы, дефекты, уведомления и приглашения на доску.
 
-Приглашения хранятся в `board_invites` со статусом `pending`, `accepted` или `declined`. Уведомления хранятся отдельно в `notification` и могут ссылаться на приглашение через JSON-поле `data`.
+Ключевые связи:
+
+- `board_member` связывает пользователей с досками и ролями;
+- `statuses` хранит колонки доски и поле `position`;
+- `defects` хранит задачи, `board_id`, `status_id`, исполнителя, автора и `position`;
+- `board_invites` хранит приглашения со статусом `pending`, `accepted` или `declined`;
+- `notification` хранит уведомления и JSON-поле `data`.
+
+Перед production-запуском нужно заменить dev-секреты, настроить CORS под домен frontend, проверить права на директорию `log/` и выполнить миграции на целевой базе.

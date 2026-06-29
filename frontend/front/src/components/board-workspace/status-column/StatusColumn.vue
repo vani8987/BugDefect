@@ -2,9 +2,12 @@
   <section 
     class="status-column"
     @dragover.prevent
-    @drop.prevent="dropColumn"
+    @drop.prevent
   >
-    <header class="status-column__head">
+    <header 
+      class="status-column__head"
+      @drop="dropStatus"
+    >
       <div class="status-column__title">
         <div
           v-if="canManage"
@@ -14,8 +17,8 @@
           role="button"
           tabindex="0"
           draggable="true"
-          @dragstart.stop="startDrag"
-          @dragend="emit('dragEnd')"
+          @dragstart.stop="startStatusDrag"
+          @dragend="emit('statusDragEnd')"
         >
           <span></span>
           <span></span>
@@ -36,18 +39,23 @@
           type="button"
           aria-label="Удалить статус"
           title="Удалить статус"
-          @click="deletStatus"
+          @click="deleteStatus"
         >
           ×
         </button>
       </div>
     </header>
 
-    <div class="status-column__items">
+    <div 
+      class="status-column__items"
+      @drop="dropDefect"
+    >
       <DefectCard
         v-for="item in column.items"
         :key="item.id"
         :item="item"
+        draggable="true"
+        @dragstart.stop="startDefectDrag($event, item.id)"
       />
 
       <p v-if="column.items.length === 0" class="status-column__empty">
@@ -58,7 +66,6 @@
 </template>
 
 <script setup lang="ts">
-import BoardCard from '@/components/board-card/BoardCard.vue';
 import DefectCard from '../defect-card/DefectCard.vue'
 import type { BoardStatusColumn } from '@/Ts/status'
 
@@ -68,28 +75,49 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'startDrag', value: number): void
-  (e: 'dropColumn', value: number): void
-  (e: 'deletStatus', value: number): void
-  (e: 'dragEnd'): void
+  (e: 'statusDragStart', value: number): void
+  (e: 'statusDrop', value: number): void
+  (e: 'deleteStatus', value: number): void
+  (e: 'statusDragEnd'): void
+  (e: 'defectDragStart', value: { defectId: number; statusId: number }): void
+  (e: 'defectDrop', value: { statusId: number }): void
 }>()
 
-function startDrag(event: DragEvent): void {
+function startStatusDrag(event: DragEvent): void {
   event.dataTransfer?.setData('text/plain', String(props.column.id))
 
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move'
   }
 
-  emit('startDrag', props.column.id)
+  emit('statusDragStart', props.column.id)
 }
 
-function dropColumn(): void {
-  emit('dropColumn', props.column.id)
+function dropStatus(): void {
+  emit('statusDrop', props.column.id)
 }
 
-function deletStatus(): void {
-  emit('deletStatus', props.column.id)
+function deleteStatus(): void {
+  emit('deleteStatus', props.column.id)
+}
+
+function startDefectDrag(event: DragEvent, defectId: number): void {
+  event.dataTransfer?.setData('text/plain', String(defectId))
+
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  emit('defectDragStart', {
+    defectId,
+    statusId: props.column.id,
+  })
+}
+
+function dropDefect(): void {
+  emit('defectDrop', {
+    statusId: props.column.id,
+  })
 }
 </script>
 

@@ -1,5 +1,5 @@
 ﻿<template>
-  <article class="defect-card">
+  <article class="defect-card" >
     <div class="defect-card__top">
       <span class="defect-card__code">DEF-{{ item.id }}</span>
       <span class="defect-card__executor">{{ item.executer_name ?? `Исполнитель #${item.executer_id}` }}</span>

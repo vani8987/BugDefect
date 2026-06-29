@@ -38,3 +38,4 @@ Router::route('/api/status/{boardId}/{statusId}', "DELETE", [StatusesController:
 
 // дефекты
 Router::route('/api/boards/{boardId}/defects', 'POST', [DefectsController::class, 'createDefect'], true);
+Router::route('/api/boards/{boardId}/defects/{defectId}/move', 'PATCH', [DefectsController::class, 'moveDefect'], true);

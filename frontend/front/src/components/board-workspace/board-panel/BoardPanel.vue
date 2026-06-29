@@ -33,10 +33,12 @@
         :key="column.id"
         :column="column"
         :can-manage="canManage"
-        @start-drag="dragStart"
-        @drop-column="dropColumn"
-        @drag-end="dragEnd"
-        @delet-status="deleteStatus"
+        @status-drag-start="statusDragStart"
+        @status-drop="statusDrop"
+        @status-drag-end="statusDragEnd"
+        @delete-status="deleteStatus"
+        @defect-drag-start="defectDragStart"
+        @defect-drop="defectDrop"
       />
     </div>
 
@@ -60,6 +62,7 @@
 import UiButton from '@/components/ui/button/UiButton.vue'
 import StatusColumn from '../status-column/StatusColumn.vue'
 import type { BoardStatusColumn } from '@/Ts/status'
+
 defineProps<{
   columns: BoardStatusColumn[]
   canManage: boolean
@@ -68,28 +71,37 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'addDefect'): void
   (e: 'addStatus'): void
-  (e: 'dragStart', value: number): void
-  (e: 'dropColumn', value: number): void
+  (e: 'statusDragStart', value: number): void
+  (e: 'statusDrop', value: number): void
   (e: 'deleteStatus', value: number): void
-  (e: 'dragEnd'): void
+  (e: 'statusDragEnd'): void
+  (e: 'defectDragStart', value: { defectId: number; statusId: number }): void
+  (e: 'defectDrop', value: { statusId: number }): void
 }>()
 
-function dragStart(value: number): void {
-  emit('dragStart', value)
+function statusDragStart(value: number): void {
+  emit('statusDragStart', value)
 }
 
-function dropColumn(value: number): void {
-  emit('dropColumn', value)
+function statusDrop(value: number): void {
+  emit('statusDrop', value)
 }
 
 function deleteStatus(value: number): void {
   emit('deleteStatus', value)
 }
 
-function dragEnd(): void {
-  emit('dragEnd')
+function statusDragEnd(): void {
+  emit('statusDragEnd')
 }
 
+function defectDragStart(value: { defectId: number; statusId: number }): void {
+  emit('defectDragStart', value)
+}
+
+function defectDrop(value: { statusId: number }): void {
+  emit('defectDrop', value)
+}
 </script>
 
 <style src="./board-panel.scss" lang="scss" />

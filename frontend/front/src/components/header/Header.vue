@@ -71,7 +71,13 @@
             </Transition>
           </div>
 
-          <button class="header__settings" type="button" aria-label="Настройки" title="Настройки (будет сделано позже)">
+          <button
+            v-if="false"
+            class="header__settings"
+            type="button"
+            aria-label="Настройки"
+            title="Настройки (будет сделано позже)"
+          >
             <IpSetting />
           </button>
 

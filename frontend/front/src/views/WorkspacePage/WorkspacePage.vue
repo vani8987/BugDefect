@@ -29,6 +29,7 @@
         icon="boards"
       />
       <UiStatCard
+        v-if="false"
         label="Открытые задачи"
         :value="0"
         description="Здесь будут задачи из всех досок которые относятся к вам"

@@ -1,83 +1,53 @@
-﻿# BugDefect
+# BugDefect
 
-BugDefect - система для работы с досками, участниками, дефектами и уведомлениями. Проект состоит из PHP API, Vue 3 SPA и MySQL, а для локального запуска используется Docker Compose.
+BugDefect — система для работы с досками, участниками, статусами, дефектами, приглашениями и уведомлениями. Проект состоит из PHP API, Vue 3 SPA и MySQL. Для локальной разработки используется Docker Compose.
 
 ## Стек
 
-- Backend: PHP 8.3, собственный мини-фреймворк, PDO, сессии, миграции.
-- Frontend: Vue 3, TypeScript, Vite, Pinia, Vue Router, Axios.
+- Backend: PHP 8.3, собственный mini-framework, PDO, сессии, миграции.
+- Frontend: Vue 3, TypeScript, Vite, Pinia, Vue Router, Axios, Sass.
 - Database: MySQL 8.
 - Dev environment: Docker Compose.
 
-## Быстрый старт через Docker
+## Быстрый старт
 
 ```bash
 docker compose up --build
+docker compose exec backend php command.php migrate:run
 ```
 
-После запуска сервисы доступны здесь:
+Сервисы:
 
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8000/api`
 - MySQL: `localhost:3307`
 
-Миграции нужно запускать отдельно:
+## Основные возможности
 
-```bash
-docker compose exec backend php command.php migrate:run
-```
-
-## Локальный запуск без Docker
-
-Backend:
-
-```bash
-cd backend
-composer install
-cp .env.example .env
-php command.php migrate:run
-php command.php serve
-```
-
-Frontend:
-
-```bash
-cd frontend/front
-npm install
-npm run dev
-```
-
-Для локального запуска backend должен быть доступен на `http://localhost:8000`, потому что frontend использует этот адрес в `src/utils/api.ts`.
+- Авторизация, регистрация, сессии и получение текущего пользователя.
+- Рабочая зона со списком досок пользователя.
+- Просмотр доски, роли текущего пользователя, статистики и участников.
+- Создание и удаление досок администратором.
+- Приглашение пользователей на доску.
+- Уведомления о приглашениях, принятие и отклонение приглашений.
+- Создание, удаление и сортировка статусов доски.
+- Drag-and-drop порядка статусов с сохранением `position`.
+- Создание дефектов с выбором статуса и исполнителя.
+- Отображение дефектов внутри статусов.
+- Drag-and-drop перенос дефектов между статусами.
+- Сохранение нового `status_id` и `position` дефекта на backend.
+- Rollback данных на frontend при ошибке сохранения переноса.
 
 ## Структура проекта
 
 ```text
-backend/          PHP API, контроллеры, модели, роуты, миграции
-frontend/front/   Vue 3 SPA
-docker-compose.yml
-README
+backend/           PHP API, контроллеры, модели, роуты, миграции
+frontend/front/    Vue 3 SPA
+backend/docs/      документация mini-framework
+IDEAS.md           roadmap и будущие идеи
+docker-compose.yml локальная инфраструктура
+README             общий README проекта
 ```
-
-## Основные возможности
-
-- Регистрация, вход, выход и получение текущего пользователя.
-- Рабочая зона с досками пользователя.
-- Просмотр доски и участников.
-- Внутренняя доска со статусами, empty-состоянием и заготовкой карточек дефектов.
-- Empty-состояние для доски без созданных статусов.
-- Создание статусов доски администратором.
-- Drag-and-drop изменение порядка статусов.
-- Сохранение порядка статусов на backend через поле `position`.
-- Удаление статусов доски администратором.
-- Форма создания дефекта с выбором статуса и исполнителя.
-- Создание дефектов и отображение их в колонках статусов.
-- Удаление доски администратором.
-- Удаление участников из доски администратором.
-- Приглашение пользователя на доску.
-- Уведомления о приглашениях.
-- Принятие и отклонение приглашений из меню уведомлений.
-- Сохранение обработанных приглашений со статусом `accepted` или `declined`.
-- Отметка уведомлений прочитанными после закрытия меню.
 
 ## Полезные команды
 
@@ -89,8 +59,35 @@ docker compose exec backend php command.php migrate:fresh
 docker compose exec frontend npm run build
 ```
 
-Подробности по частям проекта:
+## Проверка перед коммитом
+
+```bash
+cd frontend/front
+npm run type-check
+npm run build
+
+cd ../../backend
+php -l app/Controllers/DefectsController.php
+php -l app/Controllers/StatusesController.php
+```
+
+## Подготовка к деплою
+
+Перед деплоем нужно проверить:
+
+- production `.env` для backend без dev-секретов;
+- корректные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`;
+- сильный `HASH_KEY_PASSWORD`;
+- значения ролей `BOARD_ROLE_ADMIN`, `BOARD_ROLE_DEVELOPER`, `BOARD_ROLE_GUEST`;
+- CORS и адрес frontend в backend entrypoint;
+- production API URL во frontend;
+- успешный `npm run build`;
+- успешный запуск миграций на чистой базе;
+- права на запись runtime-логов backend.
+
+## Документация
 
 - Backend: `backend/README.md`
 - Frontend: `frontend/front/README.md`
-- Идеи и roadmap: `IDEAS.md`
+- Mini-framework: `backend/docs/README.md`
+- Roadmap: `IDEAS.md`

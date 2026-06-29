@@ -75,6 +75,7 @@
         icon="members"
       />
       <UiStatCard
+        v-if="false"
         label="Все задачи"
         :value="0"
         description="Общее количество задач на доске"
@@ -95,10 +96,12 @@
         :can-manage="boardStore.currentBoard?.role === 'admin'"
         @add-defect="isCreateDefectModalOpen = true"
         @add-status="isCreateStatusModalOpen = true"
-        @drag-start="startDrag"
-        @drop-column="dropColumn"
-        @drag-end="dragEnd"
+        @status-drop="dropStatusColumn"
         @delete-status="deleteStatus"
+        @status-drag-start="startStatusDrag"
+        @status-drag-end="statusDragEnd"
+        @defect-drag-start="startDefectDrag"
+        @defect-drop="dropDefect"
       />
     </div>
 
@@ -246,6 +249,10 @@ const isDeletingStatus = ref(false)
 
 const fromColumn = ref<number | null>(null)
 const toColumn = ref<number | null>(null)
+const draggedDefect = ref<{
+  defectId: number
+  fromStatusId: number
+} | null>(null)
 const defectDraft = ref({
   title: '',
   description: '',
@@ -304,7 +311,7 @@ const boardView = computed(() => {
   }
 })
 
-const startDrag = (id: number): void => {
+const startStatusDrag = (id: number): void => {
   fromColumn.value = id
 }
 
@@ -313,11 +320,88 @@ const resetDrag = (): void => {
   toColumn.value = null
 }
 
-const dragEnd = (): void => {
+const statusDragEnd = (): void => {
   resetDrag()
 }
 
-const dropColumn = async (id: number): Promise<void> => {
+function startDefectDrag(value: { defectId: number; statusId: number }): void {
+  draggedDefect.value = {
+    defectId: value.defectId,
+    fromStatusId: value.statusId,
+  }
+}
+
+async function dropDefect(value: { statusId: number }): Promise<void> {
+  if (draggedDefect.value === null) {
+    return
+  }
+
+  const fromColumn = statusStore.boardColumns.find(
+    (column) => column.id === draggedDefect.value?.fromStatusId
+  )
+  const toColumn = statusStore.boardColumns.find((column) => column.id === value.statusId)
+
+  if (!fromColumn || !toColumn) {
+    draggedDefect.value = null
+    return
+  }
+
+  const defectIndex = fromColumn.items.findIndex(
+    (item) => item.id === draggedDefect.value?.defectId
+  )
+
+  if (defectIndex === -1) {
+    draggedDefect.value = null
+    return
+  }
+
+  const savedColumns = statusStore.boardColumns.map((column) => ({
+    ...column,
+    items: column.items.map((item) => ({ ...item })),
+  }))
+  const [defect] = fromColumn.items.splice(defectIndex, 1)
+
+  if (defect === undefined) {
+    draggedDefect.value = null
+    return
+  }
+
+  toColumn.items.push({
+    ...defect,
+    status_id: toColumn.id,
+    position: toColumn.items.length + 1,
+  })
+
+  fromColumn.items = fromColumn.items.map((item, index) => ({
+    ...item,
+    position: index + 1,
+  }))
+
+  toColumn.items = toColumn.items.map((item, index) => ({
+    ...item,
+    position: index + 1,
+  }))
+
+  const movedDefect = toColumn.items.find((item) => item.id === defect.id)
+
+  if (!movedDefect) {
+    draggedDefect.value = null
+    return
+  }
+
+  const isUpdated = await defectsStore.moveDefect(boardId.value, defect.id, {
+    statusId: toColumn.id,
+    position: movedDefect.position,
+  })
+
+  if (!isUpdated) {
+    statusStore.boardColumns = savedColumns
+  }
+
+  draggedDefect.value = null
+}
+
+const dropStatusColumn = async (id: number): Promise<void> => {
   toColumn.value = id
 
   if (fromColumn.value === null || toColumn.value === fromColumn.value) {

@@ -51,4 +51,49 @@ class Defect extends CRUD {
             return [];
         }
     }
+
+    public function findByBoardAndId(int $boardId, int $defectId): ?array
+    {
+        try {
+            $statement = $this->pdo->prepare("
+                SELECT *
+                FROM defects
+                WHERE board_id = ?
+                AND id = ?
+                LIMIT 1
+            ");
+
+            $statement->execute([$boardId, $defectId]);
+
+            $defect = $statement->fetch(PDO::FETCH_ASSOC);
+
+            return $defect === false ? null : $defect;
+        } catch (Exception $err) {
+            $this->logger->error('Find defect by board and id failed: ' . $err->getMessage());
+            return null;
+        }
+    }
+
+    public function updatePositionByBoardAndId(
+        int $boardId,
+        int $defectId,
+        int $statusId,
+        int $position
+    ): bool {
+        try {
+            $statement = $this->pdo->prepare("
+                UPDATE defects
+                SET status_id = ?, position = ?
+                WHERE board_id = ?
+                AND id = ?
+            ");
+
+            $statement->execute([$statusId, $position, $boardId, $defectId]);
+
+            return $statement->rowCount() > 0;
+        } catch (Exception $err) {
+            $this->logger->error('Update defect position failed: ' . $err->getMessage());
+            return false;
+        }
+    }
 }

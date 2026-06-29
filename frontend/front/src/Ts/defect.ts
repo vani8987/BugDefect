@@ -4,3 +4,8 @@ export interface NewDefect {
   statusId: number
   executorID: number
 }
+
+export interface MoveDefect {
+  statusId: number
+  position: number
+}
