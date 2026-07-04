@@ -30,7 +30,12 @@ npm install
 npm run dev
 ```
 
-По умолчанию API вызывается по адресу `http://localhost:8000/api`. Базовый URL находится в `src/utils/api.ts`.
+По умолчанию API вызывается так:
+
+- local dev: `http://localhost:8000/api`;
+- production build: `/api`.
+
+Если нужен другой адрес, можно задать `VITE_API_BASE_URL`.
 
 ## Скрипты
 
@@ -171,6 +176,7 @@ npm run preview
 Перед production-сборкой нужно проверить:
 
 - корректный backend API URL в `src/utils/api.ts` или будущей env-настройке;
+- при необходимости переменную `VITE_API_BASE_URL`;
 - работу cookie/sessions между доменами frontend и backend;
 - CORS на backend;
 - отсутствие dev-only логики в UI;
