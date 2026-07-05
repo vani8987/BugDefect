@@ -6,7 +6,10 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libpq-dev \
-    && docker-php-ext-install pdo pdo_mysql
+    $PHPIZE_DEPS \
+    && docker-php-ext-install pdo pdo_mysql \
+    && pecl install redis \
+    && docker-php-ext-enable redis
 
 COPY . .
 

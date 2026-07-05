@@ -6,6 +6,7 @@ Backend - PHP API на собственном mini-framework. Он отвеча�
 
 - PHP 8.3
 - PDO MySQL
+- Redis session storage
 - Composer autoload PSR-4
 - `vlucas/phpdotenv`
 - Собственные классы `Router`, `Request`, `Response`, `CRUD`, `MigrationManager`
@@ -54,9 +55,23 @@ HASH_KEY_PASSWORD=replace_with_a_long_random_secret
 BOARD_ROLE_ADMIN=admin
 BOARD_ROLE_DEVELOPER=developer
 BOARD_ROLE_GUEST=guest
+
+SESSION_DRIVER=file
+SESSION_NAME=BUGDEFECTSESSID
+SESSION_LIFETIME=86400
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DATABASE=0
+REDIS_SESSION_PREFIX=bugdefect_session:
 ```
 
 Для Docker используется `DB_HOST=mysql` и порт `3306` внутри сети контейнеров. Для запуска без Docker нужно указать параметры локальной MySQL.
+
+`SESSION_DRIVER=file` использует обычные PHP-сессии. `SESSION_DRIVER=redis` переносит хранение сессий в Redis. В Docker Compose backend подключается к Redis по `REDIS_HOST=redis`.
+
+Redis нужен, чтобы сессии не зависели от файлов внутри конкретного backend-контейнера. Это полезно при перезапуске контейнера и при будущем масштабировании backend на несколько инстансов.
 
 ## Команды
 

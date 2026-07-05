@@ -7,6 +7,7 @@ BugDefect — система для работы с досками, участн
 - Backend: PHP 8.3, собственный mini-framework, PDO, сессии, миграции.
 - Frontend: Vue 3, TypeScript, Vite, Pinia, Vue Router, Axios, Sass.
 - Database: MySQL 8.
+- Sessions/cache: Redis.
 - Dev environment: Docker Compose.
 
 ## Быстрый старт
@@ -21,6 +22,7 @@ docker compose exec backend php command.php migrate:run
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8000/api`
 - MySQL: `localhost:3307`
+- Redis: `localhost:6379`
 
 ## Основные возможности
 
