@@ -1,10 +1,10 @@
 # BugDefect
 
-BugDefect — система для работы с досками, участниками, статусами, дефектами, приглашениями и уведомлениями. Проект состоит из PHP API, Vue 3 SPA и MySQL. Для локальной разработки используется Docker Compose.
+BugDefect — система для работы с досками, участниками, статусами, дефектами, приглашениями и уведомлениями. Проект состоит из PHP API, Vue 3 SPA, MySQL и Redis. Для локальной разработки используется Docker Compose.
 
 ## Стек
 
-- Backend: PHP 8.3, собственный mini-framework, PDO, сессии, миграции.
+- Backend: PHP 8.3, собственный mini-framework, PDO, middleware, миграции, Redis-сессии.
 - Frontend: Vue 3, TypeScript, Vite, Pinia, Vue Router, Axios, Sass.
 - Database: MySQL 8.
 - Sessions/cache: Redis.
@@ -26,7 +26,8 @@ docker compose exec backend php command.php migrate:run
 
 ## Основные возможности
 
-- Авторизация, регистрация, сессии и получение текущего пользователя.
+- Регистрация, вход, выход и получение текущего пользователя.
+- Хранение сессий через file driver или Redis.
 - Рабочая зона со списком досок пользователя.
 - Просмотр доски, роли текущего пользователя, статистики и участников.
 - Создание и удаление досок администратором.
@@ -39,11 +40,22 @@ docker compose exec backend php command.php migrate:run
 - Drag-and-drop перенос дефектов между статусами.
 - Сохранение нового `status_id` и `position` дефекта на backend.
 - Rollback данных на frontend при ошибке сохранения переноса.
+- Middleware-слой для авторизации, доступа к доске и проверки администратора доски.
+
+## Архитектура доступа
+
+В backend есть отдельный middleware-слой:
+
+- `AuthMiddleware` проверяет авторизацию пользователя.
+- `BoardMiddleware::boardAccess()` проверяет, что пользователь является участником доски.
+- `BoardMiddleware::boardAdmin()` проверяет, что пользователь является администратором доски.
+
+Роуты подключают нужный middleware в `backend/Routes/api.php`, а контроллеры отвечают за валидацию данных и бизнес-логику.
 
 ## Структура проекта
 
 ```text
-backend/           PHP API, контроллеры, модели, роуты, миграции
+backend/           PHP API, контроллеры, middleware, модели, роуты, миграции
 frontend/front/    Vue 3 SPA
 backend/docs/      документация mini-framework
 IDEAS.md           roadmap и будущие идеи
@@ -69,6 +81,9 @@ npm run type-check
 npm run build
 
 cd ../../backend
+php -l Core/Router.php
+php -l app/Middleware/AuthMiddleware.php
+php -l app/Middleware/BoardMiddleware.php
 php -l app/Controllers/DefectsController.php
 php -l app/Controllers/StatusesController.php
 ```
@@ -81,10 +96,12 @@ php -l app/Controllers/StatusesController.php
 - корректные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`;
 - сильный `HASH_KEY_PASSWORD`;
 - значения ролей `BOARD_ROLE_ADMIN`, `BOARD_ROLE_DEVELOPER`, `BOARD_ROLE_GUEST`;
+- `SESSION_DRIVER=file` или `SESSION_DRIVER=redis` под выбранную инфраструктуру;
+- Redis-параметры, если используется `SESSION_DRIVER=redis`;
 - CORS и адрес frontend в backend entrypoint;
-- production API URL во frontend;
+- production API URL во frontend через `VITE_API_BASE_URL`;
 - успешный `npm run build`;
-- успешный запуск миграций на чистой базе;
+- успешный запуск миграций на целевой базе;
 - права на запись runtime-логов backend.
 
 ## Документация

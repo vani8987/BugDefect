@@ -6,20 +6,14 @@ use Core\Logger;
 use Core\Response;
 use Core\Request;
 
-use App\Models\Boards;
-use App\Models\BoardsMember;
 use App\Models\Defect;
 use App\Models\Statuses;
 
 class StatusesController extends Controller {
-    private Boards $boards;
-    private BoardsMember $boardsMember;
     private Defect $defect;
     private Statuses $statuses;
 
     function __construct(){
-        $this->boards = new Boards();
-        $this->boardsMember = new BoardsMember();
         $this->defect = new Defect();
         $this->statuses = new Statuses();
 
@@ -27,16 +21,6 @@ class StatusesController extends Controller {
     }
 
     public function createStatuses(string $boardId) {
-        $userId = $this->request->getDataSession('auth_user_id');
-
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
-
         if (!$this->validate(
             filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
             'Board id is invalid',
@@ -46,20 +30,9 @@ class StatusesController extends Controller {
         }
 
         $boardId = (int) $boardId;
-        $board = $this->boards->find(['id'], $boardId);
-
-        if (!$this->validate($board !== null, 'Board not found', 404)) {
-            return;
-        }
-
         $title = $this->request->getDataJson('title');
         $description = $this->request->getDataJson('description') ?? '';
         $position = $this->request->getDataJson('position');
-
-        $is_admin = $this->boardsMember->checkRoleAdmin($boardId);
-        if (!$this->validate($is_admin, 'Only the board administrator can create statuses.', 403)) {
-            return;
-        }
 
         if (!$this->validate(
             is_string($title) && trim($title) !== '' && mb_strlen(trim($title)) <= 100,
@@ -104,16 +77,6 @@ class StatusesController extends Controller {
     }
 
     public function getAll(string $boardId) {
-        $userId = $this->request->getDataSession('auth_user_id');
-
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
-
         if (!$this->validate(
             filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
             'Board id is invalid',
@@ -123,18 +86,6 @@ class StatusesController extends Controller {
         }
 
         $boardId = (int) $boardId;
-        $board = $this->boards->find(['id'], $boardId);
-
-        if (!$this->validate($board !== null, 'Board not found', 404)) {
-            return;
-        }
-
-        $member = $this->boardsMember->findBoardMember($boardId, (int) $userId);
-
-        if (!$this->validate($member !== null, 'Access to this board is denied.', 403)) {
-            return;
-        }
-
         $allStatuses = array_map(function (array $status) use ($boardId) {
             $status['items'] = $this->defect->findAllByBoardAndStatus($boardId, (int) $status['id']);
             return $status;
@@ -146,16 +97,6 @@ class StatusesController extends Controller {
     }
 
     public function updatePosition(string $boardId) {
-        $userId = $this->request->getDataSession('auth_user_id');
-
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
-
         if (!$this->validate(
             filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
             'Board id is invalid',
@@ -165,17 +106,6 @@ class StatusesController extends Controller {
         }
 
         $boardId = (int) $boardId;
-        $board = $this->boards->find(['id'], $boardId);
-
-        if (!$this->validate($board !== null, 'Board not found', 404)) {
-            return;
-        }
-
-        $is_admin = $this->boardsMember->checkRoleAdmin($boardId);
-        if (!$this->validate($is_admin, 'Only the board administrator can update statuses.', 403)) {
-            return;
-        }
-
         $allStatuses = $this->request->getDataJson('statuses');
 
         if (!$this->validate(is_array($allStatuses), 'Statuses must be an array.', 422)) {
@@ -222,16 +152,6 @@ class StatusesController extends Controller {
     }
 
     public function deleteStatus(string $boardId, string $statusId) {
-        $user_id = $this->request->getDataSession('auth_user_id');
-
-        if (!$this->validate(
-            filter_var($user_id, FILTER_VALIDATE_INT) !== false && (int) $user_id > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
-
         if (!$this->validate(
             filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
             'Board ID must be a positive number.',
@@ -250,18 +170,6 @@ class StatusesController extends Controller {
 
         $boardId = (int) $boardId;
         $statusId = (int) $statusId;
-        $board = $this->boards->find(['id'], $boardId);
-
-        if (!$this->validate($board !== null, 'Board was not found.', 404)) {
-            return;
-        }
-
-        $is_admin = $this->boardsMember->checkRoleAdmin($boardId);
-
-        if (!$this->validate($is_admin, 'Only the board administrator can delete statuses.', 403)) {
-            return;
-        }
-
         $statusDeleted = $this->statuses->deleteByBoardAndStatus($boardId, $statusId);
 
         if (!$this->validate($statusDeleted, 'Unable to delete status.', 500)) {

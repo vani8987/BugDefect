@@ -30,14 +30,6 @@ class DefectsController extends Controller {
         $appointed_user_id = $this->request->getDataSession('auth_user_id');
 
         if (!$this->validate(
-            filter_var($appointed_user_id, FILTER_VALIDATE_INT) !== false && (int) $appointed_user_id > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
-
-        if (!$this->validate(
             filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
             'Board id is invalid',
             422
@@ -46,18 +38,6 @@ class DefectsController extends Controller {
         }
 
         $boardsId = (int) $boardId;
-        $board = $this->boards->find(['id'], $boardsId);
-
-        if (!$this->validate($board !== null, 'Board not found', 404)) {
-            return;
-        }
-
-        $is_admin = $this->boardsMember->checkRoleAdmin($boardsId);
-
-        if (!$this->validate($is_admin, 'Only the board administrator can create defects.', 403)) {
-            return;
-        }
-
         $statusId = $this->request->getDataJson('statusId');
         $executorID = $this->request->getDataJson('executorID');
         $title = $this->request->getDataJson('title');
@@ -183,16 +163,6 @@ class DefectsController extends Controller {
     }
 
     public function moveDefect(int $boardId, int $defectId) {
-        $userId = $this->request->getDataSession('auth_user_id');
-
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
-
         if (!$this->validate(
             filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
             'Board id is invalid',
@@ -232,18 +202,6 @@ class DefectsController extends Controller {
         $defectId = (int) $defectId;
         $statusId = (int) $statusId;
         $position = (int) $position;
-
-        $board = $this->boards->find(['id'], $boardId);
-
-        if (!$this->validate($board !== null, 'Board not found', 404)) {
-            return;
-        }
-
-        $isAdmin = $this->boardsMember->checkRoleAdmin($boardId);
-
-        if (!$this->validate($isAdmin, 'Only the board administrator can move defects.', 403)) {
-            return;
-        }
 
         $defect = $this->defect->findByBoardAndId($boardId, $defectId);
 

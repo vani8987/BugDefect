@@ -97,16 +97,6 @@ class BoardsController extends Controller implements BoardsControllerInterface {
     }
 
     public function deleteBoard(string $boardId) {
-        $user_id = $this->request->getDataSession('auth_user_id');
-
-        if (!$this->validate(
-            filter_var($user_id, FILTER_VALIDATE_INT) !== false && (int) $user_id > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
-
         if (!$this->validate(
             filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
             'Board ID must be a positive number.',
@@ -116,18 +106,6 @@ class BoardsController extends Controller implements BoardsControllerInterface {
         }
 
         $boardId = (int) $boardId;
-        $board = $this->boards->find(['id'], $boardId);
-
-        if (!$this->validate($board !== null, 'Board was not found.', 404)) {
-            return;
-        }
-
-        $is_admin = $this->boardsMember->checkRoleAdmin($boardId);
-
-        if (!$this->validate($is_admin, 'Only the board administrator can delete the board.', 403)) {
-            return;
-        }
-
         $allMembers = $this->boardsMember->findAll(['user_id'], 'board_id', $boardId);
 
         foreach($allMembers as $member) {
@@ -151,14 +129,6 @@ class BoardsController extends Controller implements BoardsControllerInterface {
 
     public function getAllBoards() {
         $userId = $this->request->getDataSession('auth_user_id');
-
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
 
         
         $memberships = $this->boardsMember->findAll(
@@ -209,14 +179,6 @@ class BoardsController extends Controller implements BoardsControllerInterface {
         $userId = $this->request->getDataSession('auth_user_id');
 
         if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Unauthorized.',
-            401
-        )) {
-            return;
-        }
-
-        if (!$this->validate(
             filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
             'Board ID must be a positive number.',
             422
@@ -224,22 +186,9 @@ class BoardsController extends Controller implements BoardsControllerInterface {
             return;
         }
 
-        $memberships = $this->boardsMember->findAll(
-            ['board_id', 'role_id'],
-            'user_id',
-            (int) $userId
-        );
+        $membership = $this->boardsMember->findBoardMember((int) $boardId, (int) $userId);
 
-        $membership = null;
-
-        foreach ($memberships as $item) {
-            if ((int) $item['board_id'] === (int) $boardId) {
-                $membership = $item;
-                break;
-            }
-        }
-
-        if (!$this->validate($membership !== null, 'Board was not found.', 404)) {
+        if (!$this->validate($membership !== null, 'Board member was not found.', 404)) {
             return;
         }
 

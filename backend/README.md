@@ -1,6 +1,6 @@
 # BugDefect Backend
 
-Backend - PHP API на собственном mini-framework. Он отвечает за авторизацию, доски, участников, приглашения, уведомления, статусы и дефекты.
+Backend — PHP API на собственном mini-framework. Он отвечает за авторизацию, доски, участников, приглашения, уведомления, статусы и дефекты.
 
 ## Стек
 
@@ -9,8 +9,8 @@ Backend - PHP API на собственном mini-framework. Он отвеча�
 - Redis session storage
 - Composer autoload PSR-4
 - `vlucas/phpdotenv`
-- Собственные классы `Router`, `Request`, `Response`, `CRUD`, `MigrationManager`
-- Сессии для авторизации
+- Собственные классы `Router`, `Middleware`, `Request`, `Response`, `CRUD`, `MigrationManager`
+- Docker Compose для локальной инфраструктуры
 
 ## Запуск через Docker
 
@@ -21,7 +21,7 @@ docker compose up --build
 docker compose exec backend php command.php migrate:run
 ```
 
-API будет доступен на `http://localhost:8000/api`.
+API доступен на `http://localhost:8000/api`.
 
 ## Локальный запуск
 
@@ -71,17 +71,18 @@ REDIS_SESSION_PREFIX=bugdefect_session:
 
 `SESSION_DRIVER=file` использует обычные PHP-сессии. `SESSION_DRIVER=redis` переносит хранение сессий в Redis. В Docker Compose backend подключается к Redis по `REDIS_HOST=redis`.
 
-Redis нужен, чтобы сессии не зависели от файлов внутри конкретного backend-контейнера. Это полезно при перезапуске контейнера и при будущем масштабировании backend на несколько инстансов.
+## Middleware и доступ
 
-## Команды
+В backend добавлен отдельный middleware-слой:
 
-```bash
-php command.php migrate:run      # применить новые миграции
-php command.php migrate:down     # откатить последнюю миграцию
-php command.php migrate:fresh    # пересоздать базу миграциями
-php command.php serve            # запустить API сервер
-composer dump-autoload           # обновить autoload после новых классов
-```
+- `Core\Middleware` — базовый класс middleware с доступом к `Request` и `Logger`.
+- `AuthMiddleware::userAuth()` — проверяет авторизацию пользователя по сессии.
+- `BoardMiddleware::boardAccess($boardId)` — проверяет, что пользователь является участником доски.
+- `BoardMiddleware::boardAdmin($boardId)` — проверяет, что пользователь является администратором доски.
+
+`Router` поддерживает middleware в маршрутах и передаёт параметры маршрута в методы middleware. Например, для `/api/boards/{boardId}` значение `boardId` может попасть в `boardAccess()` или `boardAdmin()`.
+
+Контроллеры теперь отвечают в основном за валидацию входных данных и бизнес-логику, а повторяющиеся проверки доступа вынесены в middleware.
 
 ## Основные маршруты
 
@@ -113,8 +114,6 @@ POST   /api/boards/{boardId}/invite/accept
 POST   /api/boards/{boardId}/invite/reject
 ```
 
-Защищённые маршруты используют сессию пользователя.
-
 ## Доски и участники
 
 Пользователь видит только те доски, где он есть в `board_member`. Для страницы доски backend возвращает данные доски, роль текущего пользователя и количество участников.
@@ -123,16 +122,9 @@ POST   /api/boards/{boardId}/invite/reject
 
 - удалить доску через `DELETE /api/boards/{boardId}`;
 - удалить участника через `DELETE /api/boards/{boardId}/members/{userId}`;
-- отправить приглашение пользователю через `POST /api/board/{boardId}/invite`;
-- управлять статусами и дефектами доски.
-
-Перед изменением данных backend проверяет авторизацию, валидность ID, существование записей и права администратора.
-
-## Приглашения и уведомления
-
-При отправке приглашения backend создаёт запись в `board_invites` со статусом `pending` и уведомление типа `invite` для приглашённого пользователя.
-
-При получении уведомлений backend добавляет в `data.status` актуальный статус приглашения из `board_invites`. Frontend по этому статусу показывает кнопки принятия/отклонения или итоговую строку.
+- отправить приглашение через `POST /api/board/{boardId}/invite`;
+- создавать, удалять и сортировать статусы;
+- создавать и перемещать дефекты.
 
 ## Статусы доски
 
@@ -145,7 +137,7 @@ POST   /api/boards/{boardId}/invite/reject
 - `PATCH /api/status/{boardId}/position` — сохранить новый порядок статусов;
 - `DELETE /api/status/{boardId}/{statusId}` — удалить статус конкретной доски.
 
-Создавать, удалять и менять порядок статусов может только администратор доски. Получать список статусов может любой участник доски.
+Получать список статусов может участник доски. Создавать, удалять и менять порядок статусов может администратор доски.
 
 ## Дефекты
 
@@ -156,9 +148,7 @@ POST   /api/boards/{boardId}/invite/reject
 - `POST /api/boards/{boardId}/defects` — создать дефект с `title`, необязательным `description`, `statusId` и `executorID`;
 - `PATCH /api/boards/{boardId}/defects/{defectId}/move` — перенести дефект в другой статус и сохранить новую позицию.
 
-При создании backend проверяет авторизацию, существование доски, права администратора, принадлежность статуса доске и принадлежность исполнителя участникам доски. Новая позиция рассчитывается как последняя позиция в статусе + 1.
-
-При переносе дефекта backend проверяет авторизацию, доску, права администратора, принадлежность дефекта доске, принадлежность целевого статуса доске и валидность новой позиции.
+При создании backend проверяет принадлежность статуса доске и принадлежность исполнителя участникам доски. При переносе проверяется принадлежность дефекта и целевого статуса этой же доске.
 
 Тело запроса переноса:
 
@@ -169,10 +159,21 @@ POST   /api/boards/{boardId}/invite/reject
 }
 ```
 
+## Команды
+
+```bash
+php command.php migrate:run      # применить новые миграции
+php command.php migrate:down     # откатить последнюю миграцию
+php command.php migrate:fresh    # пересоздать базу миграциями
+php command.php serve            # запустить API сервер
+composer dump-autoload           # обновить autoload после новых классов
+```
+
 ## Структура
 
 ```text
 app/Controllers/       контроллеры API
+app/Middleware/        middleware приложения
 app/Models/            модели таблиц
 Core/                  ядро mini-framework
 database/Migrations/   миграции таблиц
@@ -194,4 +195,6 @@ docs/                  дополнительная документация я�
 - `board_invites` хранит приглашения со статусом `pending`, `accepted` или `declined`;
 - `notification` хранит уведомления и JSON-поле `data`.
 
-Перед production-запуском нужно заменить dev-секреты, настроить CORS под домен frontend, проверить права на директорию `log/` и выполнить миграции на целевой базе.
+## Production
+
+Перед production-запуском нужно заменить dev-секреты, настроить CORS под домен frontend, проверить права на директорию `log/`, выбрать `SESSION_DRIVER`, настроить Redis при необходимости и выполнить миграции на целевой базе.

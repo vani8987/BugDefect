@@ -5,7 +5,7 @@ use InvalidArgumentException;
 
 interface routerInterface {
     public function dispatch();
-    static public function route(string $route, string $method, array $action, bool $auth = false);
+    static public function route(string $route, string $method, array $action, bool $auth = false, ?array $middleware = null);
 }
 
 class Router implements routerInterface {
@@ -17,6 +17,45 @@ class Router implements routerInterface {
     {
         $this->auth = $auth;
         $this->logger = new Logger('system.log');
+    }
+
+    private function checkMiddleware(array $middleware, string $method, string $url, Response $response, array $routeParams = []): bool
+    {
+        $middlewareClass = $middleware[0] ?? null;
+        $middlewareMethods = $middleware[1] ?? [];
+
+        if (!is_string($middlewareClass) || !class_exists($middlewareClass)) {
+            $this->logger->error("Route middleware is unavailable: {$method} {$url}.");
+            $response->json([
+                'message' => 'Internal server error.',
+            ], 500);
+            return false;
+        }
+
+        $middleware = new $middlewareClass();
+
+        foreach ($middlewareMethods as $middlewareMethod) {
+            if (!is_string($middlewareMethod) || !method_exists($middleware, $middlewareMethod)) {
+                $this->logger->error("Route middleware method is unavailable: {$middlewareMethod}.");
+                $response->json([
+                    'message' => 'Internal server error.',
+                ], 500);
+                return false;
+            }
+
+            $reflection = new \ReflectionMethod($middleware, $middlewareMethod);
+            $arguments = array_slice($routeParams, 0, $reflection->getNumberOfParameters());
+
+            if (!$middleware->$middlewareMethod(...$arguments)) {
+                $this->logger->warning("Middleware rejected route access: {$method} {$url}.");
+                $response->json([
+                    'message' => 'Unauthorized',
+                ], 401);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function dispatch() {
@@ -71,6 +110,12 @@ class Router implements routerInterface {
                 ], 500);
                 return;
             }
+
+            if ($value['middleware'] !== null) {
+                if (!$this->checkMiddleware($value['middleware'], $method, $url, $response, $matches)) {
+                    return;
+                }
+            }
             
             $controller = new $class;
 
@@ -86,7 +131,7 @@ class Router implements routerInterface {
         ], 404);
     }
 
-    static public function route(string $route, string $method, array $action, bool $auth = false) {
+    static public function route(string $route, string $method, array $action, bool $auth = false, ?array $middleware = null) {
         if (count($action) !== 2 || !is_string($action[0]) || !is_string($action[1])) {
             throw new InvalidArgumentException('A route action must contain a controller class and method name.');
         }
@@ -96,7 +141,8 @@ class Router implements routerInterface {
             'method' => strtoupper($method), 
             'className' => $action[0],
             'methodName' => $action[1],
-            'auth' => $auth
+            'auth' => $auth,
+            'middleware' => $middleware
         ];
     }
 }

@@ -4,7 +4,7 @@
 
 ## Разделы
 
-- `router.md` — роутинг и запуск контроллеров.
+- `router.md` — роутинг, параметры маршрутов, middleware и запуск контроллеров.
 - `response.md` — отправка JSON-ответов.
 - `request.md` — получение данных из HTTP-запроса, JSON body и сессии.
 - `logger.md` — системное логирование Core-классов.
@@ -18,7 +18,24 @@
 
 ## Роль Core
 
-`Core` — ядро backend-приложения. В нём лежат классы, которые не относятся к конкретной бизнес-логике, но нужны всему API: маршруты, запросы, ответы, подключение к базе, CRUD-операции, логирование и инструменты для миграций.
+`Core` — ядро backend-приложения. В нём лежат классы, которые не относятся к конкретной бизнес-логике, но нужны всему API: маршруты, middleware, запросы, ответы, подключение к базе, CRUD-операции, логирование и инструменты для миграций.
 
-Бизнес-логика проекта находится выше — в `app/Controllers`, `app/Models`, `Routes/api.php` и миграциях.
+Бизнес-логика проекта находится выше — в `app/Controllers`, `app/Models`, `app/Middleware`, `Routes/api.php` и миграциях.
 
+## Router и Middleware
+
+`Router` регистрирует маршруты через `Router::route()` и вызывает нужный контроллер. Маршрут может принимать middleware пятым аргументом:
+
+```php
+Router::route(
+    '/api/boards/{boardId}',
+    'GET',
+    [BoardsController::class, 'getBoard'],
+    false,
+    [BoardMiddleware::class, ['userAuth', 'boardAccess']]
+);
+```
+
+Если маршрут содержит параметры, например `{boardId}`, `Router` передаёт их в middleware-методы, которые ожидают аргументы. Поэтому `userAuth()` вызывается без аргументов, а `boardAccess($boardId)` получает ID доски.
+
+Базовый `Core\Middleware` хранит общие зависимости middleware: `Request` и `Logger`. Конкретные middleware приложения лежат в `app/Middleware`.
