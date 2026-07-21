@@ -1,6 +1,6 @@
 # BugDefect Frontend
 
-Frontend — Vue 3 SPA для BugDefect. Приложение показывает рабочую зону, доски, участников, статусы, дефекты, приглашения и уведомления.
+Frontend - Vue 3 SPA для BugDefect. Приложение показывает рабочую зону, доски, участников, статусы, дефекты, приглашения и уведомления.
 
 ## Стек
 
@@ -11,9 +11,9 @@ Frontend — Vue 3 SPA для BugDefect. Приложение показывае
 - Vue Router
 - Axios
 - Sass
-- vue-icons-plus
+- `vue-icons-plus`
 
-## Запуск через Docker
+## Запуск Через Docker
 
 Из корня проекта:
 
@@ -21,165 +21,83 @@ Frontend — Vue 3 SPA для BugDefect. Приложение показывае
 docker compose up --build
 ```
 
-Frontend будет доступен на `http://localhost:5173`.
+Frontend доступен на `http://localhost:5173`.
 
-## Локальный запуск
+## Локальный Запуск
 
 ```bash
 npm install
 npm run dev
 ```
 
-По умолчанию API вызывается так:
+По умолчанию API выбирается в `src/utils/api.ts`:
 
-- local dev: `http://localhost:8000/api`;
-- production build: `/api`.
+- dev: `http://localhost:8000/api`
+- production: `/api`
 
-Если нужен другой адрес, можно задать `VITE_API_BASE_URL`.
+Адрес можно переопределить через `VITE_API_BASE_URL`.
 
 ## Скрипты
 
 ```bash
-npm run dev          # dev server Vite
-npm run build        # type-check и production build
-npm run build-only   # только Vite build
-npm run type-check   # проверка TypeScript/Vue
-npm run preview      # preview production build
-npm run format       # форматирование src через Prettier
+npm run dev
+npm run build
+npm run build-only
+npm run type-check
+npm run preview
+npm run format
 ```
 
 ## Структура
 
 ```text
-src/components/      переиспользуемые компоненты
+src/views/           страницы приложения
+src/components/      компоненты предметной области
 src/components/ui/   базовые UI-компоненты
-src/router/          маршруты Vue Router
 src/stores/          Pinia stores
+src/router/          Vue Router
 src/Ts/              TypeScript-типы
 src/utils/           API client и утилиты
-src/views/           страницы приложения
-src/assets/          глобальные стили и ассеты
+src/assets/          стили и ассеты
 ```
 
-## Основные страницы
+## Основные Страницы
 
-- `/login` — вход в аккаунт.
-- `/register` — регистрация.
-- `/workspace` — рабочая зона со списком досок.
-- `/boards/:boardId` — страница конкретной доски.
+- `/login` - вход.
+- `/register` - регистрация.
+- `/workspace` - список досок пользователя.
+- `/boards/:boardId` - доска со статусами и дефектами.
 
-## Авторизация и API
+## API И Авторизация
 
-Axios настроен с `withCredentials: true`, поэтому frontend отправляет session cookie вместе с запросами. Защищённые маршруты проверяются через `authStore.me()` в router guard.
+Axios настроен с `withCredentials: true`, поэтому session cookie отправляется вместе с запросами. Router guard проверяет текущего пользователя через `authStore.me()`.
 
-Если backend недоступен или запрос авторизации ещё выполняется, корневой `App.vue` показывает глобальный loader.
+## Доска
 
-## Доски и участники
+Страница доски показывает:
 
-Страница доски показывает описание, роль текущего пользователя, статистику, список участников и рабочую область дефектов.
+- описание доски;
+- роль текущего пользователя;
+- статистику;
+- участников;
+- статусы;
+- дефекты внутри статусов.
 
-Для администратора доступны действия:
-
-- открыть модалку добавления участника;
-- удалить доску через `DELETE /api/boards/{boardId}`;
-- удалить участника из списка через `DELETE /api/boards/{boardId}/members/{userId}`;
-- открыть модалку создания нового статуса;
-- создать дефект;
-- удалить пустой статус;
-- менять порядок статусов и переносить дефекты между статусами.
-
-Логика досок находится в `src/stores/boardStore.ts`.
-
-## Рабочая доска
-
-Каркас рабочей доски разнесён на компоненты:
-
-- `src/components/board-workspace/board-panel/BoardPanel.vue` — общая панель доски и проброс drag/drop событий;
-- `src/components/board-workspace/status-column/StatusColumn.vue` — колонка статуса;
-- `src/components/board-workspace/defect-card/DefectCard.vue` — карточка дефекта;
-- `src/Ts/status.ts` — типы статусов, позиций и карточек дефектов.
-
-Статусы вынесены в `src/stores/statusesStore.ts`. Если статусы ещё не созданы, `BoardPanel` показывает empty-состояние с подсказкой и кнопкой добавления статуса для администратора.
-
-Для статусов подключена логика:
-
-- создание нового статуса через модальное окно;
-- загрузка статусов доски с backend;
-- удаление пустого статуса с состоянием `Удаление статуса...`;
-- `dragstart` запоминает id перетаскиваемого статуса;
-- `drop` передаёт id статуса, на который был сброшен элемент;
-- порядок статусов обновляется на фронтенде с пересчётом `position`;
-- новый порядок сохраняется через `PATCH /api/status/{boardId}/position`;
-- при ошибке сохранения порядок возвращается к предыдущему состоянию.
-
-## Дефекты
-
-Форма создания дефекта содержит:
-
-- название;
-- необязательное описание;
-- выбор начального статуса;
-- выбор исполнителя из участников доски.
-
-Дефекты создаются через `src/stores/defectsStore.ts`, сохраняются на backend и возвращаются внутри `items` каждого статуса.
-
-Карточки дефектов показывают:
-
-- код `DEF-{id}`;
-- название;
-- описание;
-- исполнителя;
-- автора;
-- позицию внутри статуса.
-
-Для дефектов подключена логика:
-
-- `dragstart` запоминает `defectId` и исходный `statusId`;
-- `drop` получает целевой `statusId`;
-- карточка удаляется из старого статуса и добавляется в новый;
-- пересчитываются позиции в старой и новой колонке;
-- перенос сохраняется через `PATCH /api/boards/{boardId}/defects/{defectId}/move`;
-- при ошибке backend frontend возвращает предыдущие данные.
+Администратор доски может удалять доску, управлять участниками, приглашать пользователей, создавать и удалять статусы, создавать и переносить дефекты.
 
 ## Stores
 
-- `src/stores/authStore.ts` — авторизация и текущий пользователь.
-- `src/stores/boardStore.ts` — доски, текущая доска, участники и действия администратора.
-- `src/stores/statusesStore.ts` — статусы, порядок статусов, удаление статуса.
-- `src/stores/defectsStore.ts` — создание и перенос дефектов.
-- `src/stores/InviteStore.ts` — приглашения.
-- `src/stores/NotificationStore.ts` — уведомления и обработка приглашений.
+- `authStore.ts` - авторизация и текущий пользователь.
+- `boardStore.ts` - доски, текущая доска, участники.
+- `statusesStore.ts` - статусы и порядок колонок.
+- `defectsStore.ts` - создание и перенос дефектов.
+- `InviteStore.ts` - приглашения.
+- `NotificationStore.ts` - уведомления и обработка приглашений.
 
-## Уведомления
-
-Меню уведомлений поддерживает:
-
-- показ количества непрочитанных уведомлений в header;
-- отметку всех уведомлений прочитанными после закрытия меню через `PATCH /api/notifications/read`;
-- принятие приглашения через `POST /api/boards/{boardId}/invite/accept`;
-- отклонение приглашения через `POST /api/boards/{boardId}/invite/reject`;
-- скрытие кнопок у обработанного приглашения;
-- показ итоговой строки `Вы приняли приглашение` или `Вы отклонили приглашение`;
-- обновление списка досок после принятия приглашения.
-
-Статус приглашения приходит в `notification.data.status` и может быть `pending`, `accepted` или `declined`.
-
-## Проверка перед деплоем
+## Проверка
 
 ```bash
-npm install
 npm run type-check
 npm run build
 npm run preview
 ```
-
-Перед production-сборкой нужно проверить:
-
-- корректный backend API URL в `src/utils/api.ts` или будущей env-настройке;
-- при необходимости переменную `VITE_API_BASE_URL`;
-- работу cookie/sessions между доменами frontend и backend;
-- CORS на backend;
-- отсутствие dev-only логики в UI;
-- прохождение `npm run build` без ошибок.
-
-После `npm run build` production-файлы будут в `dist/`.

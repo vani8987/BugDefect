@@ -2,6 +2,7 @@
 
 namespace App\Models;
 use Core\CRUD;
+use Core\Logger;
 use Exception;
 use PDO;
 
@@ -11,9 +12,9 @@ class BoardsMember extends CRUD {
     private Request $request;
     private string $adminRoleName;
 
-    function __construct(){
-        $this->request = new Request();
-        parent::__construct('board_member');
+    public function __construct(?Request $request = null, ?Logger $logger = null) {
+        $this->request = $request ?? new Request();
+        parent::__construct('board_member', $logger);
         $this->adminRoleName = $_ENV['BOARD_ROLE_ADMIN'] ?? getenv('BOARD_ROLE_ADMIN') ?: 'admin';
     }
 

@@ -1,57 +1,59 @@
-# Авторизация
+# Auth
 
-`Core\Auth` хранит состояние авторизации в PHP-сессии. Класс не привязан к
-имени таблицы: приложение передаёт ему свою модель, реализующую
-`Core\UserProviderInterface`.
+Файл: `Core/Auth.php`
 
-## Контракт модели
+`Auth` отвечает за регистрацию, вход, выход, проверку сессии и получение текущего пользователя.
 
-Переданная модель должна содержать следующие методы:
+## Зависимости
 
 ```php
-public function findByEmail(string $email): ?array;
-public function find(array $columns, int $id): ?array;
-public function create(array $columns, array $values): bool;
+public function __construct(
+    Request|UserProviderInterface $request,
+    Request|UserProviderInterface|null $modelBD = null,
+    ?Logger $logger = null
+)
 ```
 
-`findByEmail()` должен вернуть минимум `id` и `password`. Значение `password`
-— это хеш, созданный функцией `password_hash()`.
-
-## Настройка приложения
-
-В `public/index.php` приложение выбирает модель и передаёт `Auth` в роутер:
+Поддерживаются оба варианта:
 
 ```php
-$auth = new Auth(new User());
-$router = new Router($auth);
+new Auth($request, $userModel, $logger);
+new Auth($userModel);
 ```
 
-В `.env` необходимо задать `HASH_KEY_PASSWORD`. Это дополнительный секрет
-для хеширования паролей, поэтому не меняйте его после регистрации пользователей.
+Основной runtime получает `Auth` из container.
 
-## Публичные и защищённые маршруты
+## UserProviderInterface
 
-Четвёртый аргумент `Router::route()` управляет доступом:
+Модель пользователя должна реализовать:
 
 ```php
-Router::route('/auth/login', 'POST', [AuthController::class, 'login']);
-Router::route('/auth/me', 'GET', [AuthController::class, 'me'], true);
+findByEmail(string $email): ?array
+find(array $columns, int $id): ?array
+create(array $nameColumns, array $values): bool
 ```
 
-Если у защищённого маршрута нет авторизованной сессии, `Router` вернёт ответ:
+В проекте это `App\Models\User`.
 
-```json
-{"message":"Unauthorized"}
+## Пароли
+
+Перед `password_hash()` пароль дополняется HMAC:
+
+```php
+hash_hmac('sha256', $password, HASH_KEY_PASSWORD)
 ```
 
-со статусом HTTP `401`.
+`HASH_KEY_PASSWORD` обязателен в `.env`.
 
-## Последовательность входа
+## Методы
 
-1. Контроллер получает `email` и `password` из JSON с помощью `Request::getDataJson()`.
-2. Контроллер вызывает `Auth::loginByEmail($password, $email)`.
-3. `Auth` получает пользователя через `findByEmail()` и проверяет пароль.
-4. При успехе `Auth` сохраняет ID пользователя в `$_SESSION['auth_user_id']`.
-5. Позже `Auth::user(['id', 'email'])` загружает безопасные данные профиля по этому ID.
+- `registerByEmail($password, $mail)` - создает пользователя.
+- `loginByEmail($password, $mail)` - проверяет пароль и записывает `auth_user_id` в session.
+- `checkUser()` - проверяет наличие пользователя в session.
+- `requireAuth()` - бросает `RuntimeException` с code `401`, если пользователь не авторизован.
+- `user($columns)` - возвращает данные текущего пользователя.
+- `logout()` - очищает `auth_user_id`.
 
-Никогда не запрашивайте колонку `password` через `Auth::user()`.
+## Использование В Router
+
+`Router` получает `Auth` через container и может вызвать `requireAuth()` для маршрутов с auth flag. В текущих API-маршрутах основные проверки доступа вынесены в middleware.

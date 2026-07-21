@@ -13,11 +13,19 @@ class StatusesController extends Controller {
     private Defect $defect;
     private Statuses $statuses;
 
-    function __construct(){
-        $this->defect = new Defect();
-        $this->statuses = new Statuses();
+    public function __construct(
+        ?Request $request = null,
+        ?Response $response = null,
+        ?Logger $logger = null,
+        ?Defect $defect = null,
+        ?Statuses $statuses = null
+    ) {
+        $request = $request ?? new Request();
+        $response = $response ?? new Response();
+        $this->defect = $defect ?? new Defect();
+        $this->statuses = $statuses ?? new Statuses();
 
-        parent::__construct(new Logger('Statuses.log'), new Response(), new Request());
+        parent::__construct($logger ?? new Logger('Statuses.log'), $response, $request);
     }
 
     public function createStatuses(string $boardId) {

@@ -1,41 +1,47 @@
 # Request
 
-Путь к Core-файлу:
+Файл: `Core/Request.php`
 
-`Core/Request.php`
+`Request` читает данные из разных источников HTTP-запроса и session.
 
-## Назначение
+## Конструктор
 
-`Request` получает значения из стандартных PHP-массивов запроса и из JSON-тела
-HTTP-запроса. Если ключ в `POST`, query-параметрах, cookie или сессии не
-передан, соответствующий метод возвращает `null` и записывает сообщение в
-`log/system.log`.
+```php
+public function __construct(?Logger $logger = null)
+{
+    $this->logger = $logger ?? new Logger('system.log');
+}
+```
+
+Через container обычно передается общий `Logger`.
 
 ## Методы
 
 ```php
-use Core\Request;
-
-$request = new Request();
-
-$email = $request->getDataBody('email');
-$page = $request->getDataUrl('page');
-$theme = $request->getDataCookie('theme');
-$userId = $request->getDataSession('user_id');
-$title = $request->getDataJson('title');
+$request->getDataJson('title');
+$request->getDataBody('name');
+$request->getDataUrl('page');
+$request->getDataCookie('theme');
+$request->getDataSession('auth_user_id');
 ```
 
-- `getDataBody(string $key)` читает значение из `$_POST`.
-- `getDataUrl(string $key)` читает query-параметр из `$_GET`.
-- `getDataCookie(string $key)` читает cookie из `$_COOKIE`.
-- `getDataSession(string $key)` запускает сессию, если она ещё не начата, и
-  читает значение из `$_SESSION`.
-- `getDataJson(string $key)` читает JSON из `php://input`, преобразует его в
-  массив и возвращает значение по ключу.
+Если источник пустой, ключ отсутствует или JSON некорректный, метод возвращает `null` и пишет запись в лог.
 
-## Ограничения
+## JSON
 
-При пустом или некорректном JSON, JSON не в виде объекта или отсутствующем
-ключе `getDataJson()` возвращает `null` и записывает сообщение в
-`log/system.log`.
-Общей валидации данных в `Request` пока нет.
+`getDataJson()` читает `php://input`, декодирует JSON через `JSON_THROW_ON_ERROR` и ожидает объект.
+
+Пример тела запроса:
+
+```json
+{
+  "title": "Login bug",
+  "description": "Cannot login with valid password"
+}
+```
+
+## Session
+
+`getDataSession()` запускает `session_start()`, если сессия еще не активна.
+
+Настройка session выполняется раньше в `public/index.php` через `SessionManager::configure()`.

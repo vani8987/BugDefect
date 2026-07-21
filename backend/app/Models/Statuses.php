@@ -2,13 +2,14 @@
 
 namespace App\Models;
 use Core\CRUD;
+use Core\Logger;
 use Exception;
 use PDO;
 
 class Statuses extends CRUD {
 
-    function __construct(){
-        return parent::__construct('statuses');
+    public function __construct(?Logger $logger = null) {
+        parent::__construct('statuses', $logger);
     }
 
     public function findPositionByBoardAndStatus(int $boardId, int $statusId): ?array

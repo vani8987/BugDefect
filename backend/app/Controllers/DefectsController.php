@@ -17,13 +17,23 @@ class DefectsController extends Controller {
     private BoardsMember $boardsMember;
     private Statuses $statuses;
 
-    function __construct(){
-        $this->defect = new Defect();
-        $this->boards = new Boards();
-        $this->boardsMember = new BoardsMember();
-        $this->statuses = new Statuses();
+    public function __construct(
+        ?Request $request = null,
+        ?Response $response = null,
+        ?Logger $logger = null,
+        ?Defect $defect = null,
+        ?Boards $boards = null,
+        ?BoardsMember $boardsMember = null,
+        ?Statuses $statuses = null
+    ) {
+        $request = $request ?? new Request();
+        $response = $response ?? new Response();
+        $this->defect = $defect ?? new Defect();
+        $this->boards = $boards ?? new Boards();
+        $this->boardsMember = $boardsMember ?? new BoardsMember($request);
+        $this->statuses = $statuses ?? new Statuses();
 
-        parent::__construct(new Logger('Defects.log'), new Response(), new Request());
+        parent::__construct($logger ?? new Logger('Defects.log'), $response, $request);
     }
 
     public function createDefect(int $boardId) {

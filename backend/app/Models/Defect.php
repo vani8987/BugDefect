@@ -2,13 +2,14 @@
 
 namespace App\Models;
 use Core\CRUD;
+use Core\Logger;
 use Exception;
 use PDO;
 
 class Defect extends CRUD {
 
-    function __construct(){
-        parent::__construct('defects');
+    public function __construct(?Logger $logger = null) {
+        parent::__construct('defects', $logger);
     }
 
     public function findLastPositionByBoardAndStatus(int $boardId, int $statusId): int

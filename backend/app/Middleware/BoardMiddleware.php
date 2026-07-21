@@ -4,17 +4,26 @@ namespace App\Middleware;
 
 use App\Models\Boards;
 use App\Models\BoardsMember;
+use App\Models\User;
+use Core\Logger;
+use Core\Request;
 
 class BoardMiddleware extends AuthMiddleware
 {
     private Boards $boards;
     private BoardsMember $boardsMember;
 
-    public function __construct()
+    public function __construct(
+        ?Request $request = null,
+        ?Logger $logger = null,
+        ?User $user = null,
+        ?Boards $boards = null,
+        ?BoardsMember $boardsMember = null
+    )
     {
-        parent::__construct();
-        $this->boards = new Boards();
-        $this->boardsMember = new BoardsMember();
+        parent::__construct($request, $logger, $user);
+        $this->boards = $boards ?? new Boards();
+        $this->boardsMember = $boardsMember ?? new BoardsMember();
     }
 
     public function boardAccess(string|int $boardId): bool

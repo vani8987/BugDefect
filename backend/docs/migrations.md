@@ -1,51 +1,43 @@
 # Migrations
 
-Путь к файлу:
+Файлы:
 
-`database/migration.php`
+- `database/migration.php`
+- `database/Migrations/*.php`
+- `command.php`
 
-## Назначение
+`MigrationManager` применяет, откатывает и пересоздает миграции.
 
-`MigrationManager` запускает файлы миграций из папки `database/Migrations`.
+## Команды
 
-Он умеет:
+```bash
+php command.php migrate:run
+php command.php migrate:down
+php command.php migrate:fresh
+```
 
-- запускать миграции через `run()`;
-- откатывать миграции через `rollback()`;
-- пересоздавать таблицы через `fresh()`.
+## Таблица migrations
 
-При первом запуске менеджер создаёт служебную таблицу `migrations`. После
-успешного выполнения файл записывается в неё вместе с номером batch.
-Повторный `run()` пропускает уже выполненные миграции.
-
-## Порядок запуска
-
-Файлы миграций называются с числовым префиксом:
+При старте manager создает таблицу:
 
 ```text
-001_CreateTableExamples.php
-002_AddStatusToExamples.php
+migrations(id, name, batch, executed_at)
 ```
 
-`MigrationManager` сортирует файлы по имени, поэтому `run()` выполняет их сверху вниз.
+Уже примененные файлы повторно не запускаются.
 
-`rollback()` откатывает только последний batch. Внутри batch миграции идут в
-обратном порядке, чтобы сначала удалялись зависимые таблицы.
+## Порядок
 
-`fresh()` откатывает все записанные миграции, затем применяет их заново.
+Файлы берутся из `database/Migrations`, фильтруются по расширению `.php` и сортируются по имени.
 
-## Как создается класс миграции
-
-Для файла:
+Класс миграции определяется по имени файла без числового префикса:
 
 ```text
-001_CreateTableExamples.php
+001_CreateTableRoles.php -> database\Migrations\CreateTableRoles
 ```
 
-менеджер убирает префикс `001_` и получает класс:
+## Rollback
 
-```php
-database\Migrations\CreateTableExamples
-```
+`migrate:down` откатывает последний batch.
 
-После этого создается объект и вызывается `up()` или `down()`.
+`migrate:fresh` откатывает все примененные миграции и запускает их заново.

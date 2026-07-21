@@ -25,13 +25,14 @@ class AuthController extends Controller implements interfaceAuth {
     private Roles $roles;
 
     
-    public function __construct()
+    public function __construct(?Auth $auth = null, ?Request $request = null, ?Response $response = null, ?Logger $logger = null, ?User $user = null, ?Roles $roles = null)
     {   
-        $this->roles = new Roles();
-        $this->user = new User();
-        $this->request = new Request();
-        parent::__construct(new Logger('User.log'), new Response(), new Request());
-        $this->auth = new Auth($this->user);
+        $this->request = $request ?? new Request();
+        $this->response = $response ?? new Response();
+        $this->roles = $roles ?? new Roles();
+        $this->user = $user ?? new User();
+        parent::__construct($logger ?? new Logger('User.log'), $this->response, $this->request);
+        $this->auth = $auth ?? new Auth($this->request, $this->user);
     }
 
     public function register() {

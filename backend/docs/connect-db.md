@@ -1,36 +1,40 @@
 # ConnectDB
 
-Путь к Core-файлу:
+Файл: `Core/ConnectDB.php`
 
-`Core/ConnectDB.php`
+`ConnectDB` создает PDO-подключение к MySQL и хранит его в `$this->pdo`.
 
-## Назначение
+## Конструктор
 
-`ConnectDB` отвечает за подключение к базе данных через PDO.
+```php
+public function __construct(?Logger $logger = null)
+{
+    $this->logger = $logger ?? new Logger('database.log');
+    $this->loadEnv();
+    $this->pdo = $this->connectDB();
+}
+```
 
-Класс загружает `.env` из корневой папки проекта и читает настройки базы:
+## Env
 
-- `DB_HOST`
-- `DB_PORT`
-- `DB_NAME`
-- `DB_USER`
-- `DB_PASSWORD`
+Используются переменные:
 
-После подключения объект `PDO` сохраняется в защищенное свойство `$pdo`, чтобы дочерние классы могли выполнять SQL-запросы.
-Подключение и ошибки подключения записываются в `log/system.log`.
+```env
+DB_HOST=mysql
+DB_PORT=3306
+DB_NAME=bug_defect
+DB_USER=root
+DB_PASSWORD=root
+```
 
-## Как работает
+Если `.env` существует в `backend/.env`, класс загрузит его через `vlucas/phpdotenv`.
 
-1. Конструктор вызывает загрузку `.env`.
-2. Метод подключения читает значения из `$_ENV` или `getenv()`.
-3. Создается объект `PDO`.
-4. Включается режим ошибок `PDO::ERRMODE_EXCEPTION`.
-5. Подключение сохраняется в `$this->pdo`.
+## PDO
 
-## Где используется
+DSN:
 
-От этого класса наследуются классы, которым нужен доступ к базе данных:
+```text
+mysql:host={DB_HOST};port={DB_PORT};dbname={DB_NAME};charset=utf8mb4
+```
 
-- `CreateTable`
-- `CRUD`
-- будущие модели приложения
+PDO работает с `PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION`.

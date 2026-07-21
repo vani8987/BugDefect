@@ -10,13 +10,17 @@ interface routerInterface {
 
 class Router implements routerInterface {
     private static array $arrayRouters = [];
+    private Container $container;
     private Logger $logger;
     private Auth $auth;
+    private Response $response;
 
-    public function __construct(Auth $auth)
+    public function __construct(Auth $auth, ?Container $container = null, ?Logger $logger = null, ?Response $response = null)
     {
         $this->auth = $auth;
-        $this->logger = new Logger('system.log');
+        $this->container = $container ?? new Container();
+        $this->logger = $logger ?? new Logger('system.log');
+        $this->response = $response ?? new Response($this->logger);
     }
 
     private function checkMiddleware(array $middleware, string $method, string $url, Response $response, array $routeParams = []): bool
@@ -32,7 +36,7 @@ class Router implements routerInterface {
             return false;
         }
 
-        $middleware = new $middlewareClass();
+        $middleware = $this->container->make($middlewareClass);
 
         foreach ($middlewareMethods as $middlewareMethod) {
             if (!is_string($middlewareMethod) || !method_exists($middleware, $middlewareMethod)) {
@@ -59,7 +63,7 @@ class Router implements routerInterface {
     }
 
     public function dispatch() {
-        $response = new Response();
+        $response = $this->response;
         $url = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $method = $_SERVER['REQUEST_METHOD'];
 
@@ -117,7 +121,7 @@ class Router implements routerInterface {
                 }
             }
             
-            $controller = new $class;
+            $controller = $this->container->make($class);
 
             $controller->$functionClass(...$matches);
             $this->logger->info("Route dispatched: {$method} {$url}.");

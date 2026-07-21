@@ -1,30 +1,55 @@
 # Controller
 
-Путь к Core-файлу:
+Файл: `Core/Controller.php`
 
-`Core/Controller.php`
+Базовый controller хранит общие зависимости:
 
-## Назначение
+- `Request`
+- `Response`
+- `Logger`
 
-`Controller` — базовый класс для будущих контроллеров приложения. Он создаёт
-защищённое свойство `$logger` с записью в `log/system.log` и служит точкой
-расширения.
-
-Контроллеры будут получать данные через `Request`, выполнять бизнес-логику и
-формировать JSON-ответ через `Response`.
-
-Пример будущего контроллера:
+## Конструктор
 
 ```php
-namespace App\Controllers;
-
-use Core\Controller;
-
-class ExampleController extends Controller
+public function __construct(Logger $logger, Response $response, Request $request)
 {
-    public function index(): void
-    {
-        // Логика приложения.
-    }
+    $this->request = $request;
+    $this->logger = $logger;
+    $this->response = $response;
 }
 ```
+
+Конкретные controllers принимают зависимости через optional-параметры и передают core-зависимости в `parent::__construct()`.
+
+Пример:
+
+```php
+public function __construct(
+    ?Request $request = null,
+    ?Response $response = null,
+    ?Logger $logger = null,
+    ?Boards $boards = null
+) {
+    $request = $request ?? new Request();
+    $response = $response ?? new Response();
+    $this->boards = $boards ?? new Boards();
+
+    parent::__construct($logger ?? new Logger('Board.log'), $response, $request);
+}
+```
+
+## validate()
+
+`validate()` проверяет условие и, если оно ложно:
+
+- пишет ошибку в logger;
+- отправляет JSON с `message`;
+- возвращает `false`.
+
+```php
+if (!$this->validate($board !== null, 'Board was not found.', 404)) {
+    return;
+}
+```
+
+Это общий способ останавливать controller action при ошибке входных данных или бизнес-логики.

@@ -1,16 +1,18 @@
 # BugDefect
 
-BugDefect — система для работы с досками, участниками, статусами, дефектами, приглашениями и уведомлениями. Проект состоит из PHP API, Vue 3 SPA, MySQL и Redis. Для локальной разработки используется Docker Compose.
+BugDefect - система для работы с досками дефектов: пользователи создают доски, приглашают участников, настраивают статусы и двигают дефекты между колонками.
+
+Проект состоит из PHP API на собственном mini-framework, Vue 3 SPA, MySQL и Redis.
 
 ## Стек
 
-- Backend: PHP 8.3, собственный mini-framework, PDO, middleware, миграции, Redis-сессии.
+- Backend: PHP 8+, собственный mini-framework, PDO, DI container, middleware, migrations.
 - Frontend: Vue 3, TypeScript, Vite, Pinia, Vue Router, Axios, Sass.
 - Database: MySQL 8.
-- Sessions/cache: Redis.
+- Sessions: PHP sessions через file driver или Redis.
 - Dev environment: Docker Compose.
 
-## Быстрый старт
+## Быстрый Старт
 
 ```bash
 docker compose up --build
@@ -24,89 +26,85 @@ docker compose exec backend php command.php migrate:run
 - MySQL: `localhost:3307`
 - Redis: `localhost:6379`
 
-## Основные возможности
+## Возможности
 
 - Регистрация, вход, выход и получение текущего пользователя.
-- Хранение сессий через file driver или Redis.
+- Сессии через file driver или Redis.
 - Рабочая зона со списком досок пользователя.
-- Просмотр доски, роли текущего пользователя, статистики и участников.
-- Создание и удаление досок администратором.
-- Приглашение пользователей на доску.
-- Уведомления о приглашениях, принятие и отклонение приглашений.
+- Создание, просмотр и удаление досок.
+- Роли участников доски: admin, developer, guest.
+- Приглашения пользователей на доску и уведомления.
+- Принятие и отклонение приглашений.
 - Создание, удаление и сортировка статусов доски.
-- Drag-and-drop порядка статусов с сохранением `position`.
-- Создание дефектов с выбором статуса и исполнителя.
-- Отображение дефектов внутри статусов.
+- Создание дефектов с исполнителем, автором, статусом и позицией.
 - Drag-and-drop перенос дефектов между статусами.
-- Сохранение нового `status_id` и `position` дефекта на backend.
-- Rollback данных на frontend при ошибке сохранения переноса.
-- Middleware-слой для авторизации, доступа к доске и проверки администратора доски.
+- Middleware для авторизации, доступа к доске и проверки администратора.
 
-## Архитектура доступа
+## Архитектура Backend
 
-В backend есть отдельный middleware-слой:
+HTTP-точка входа: `backend/public/index.php`.
 
-- `AuthMiddleware` проверяет авторизацию пользователя.
-- `BoardMiddleware::boardAccess()` проверяет, что пользователь является участником доски.
-- `BoardMiddleware::boardAdmin()` проверяет, что пользователь является администратором доски.
+Приложение собирается через `backend/app/bootstrap/app.php`:
 
-Роуты подключают нужный middleware в `backend/Routes/api.php`, а контроллеры отвечают за валидацию данных и бизнес-логику.
+- регистрирует `Core\Container`;
+- описывает фабрики для `Request`, `Response`, `Logger`, `Auth`, `Router`;
+- регистрирует модели, middleware и все API-контроллеры;
+- передает контейнер в `Router`.
 
-## Структура проекта
+`Router` берет контроллеры и middleware из контейнера, поэтому зависимости можно передавать через конструкторы. Для обратной совместимости в контроллерах и моделях оставлены fallback-значения через `?? new ...`.
+
+## Структура
 
 ```text
-backend/           PHP API, контроллеры, middleware, модели, роуты, миграции
-frontend/front/    Vue 3 SPA
-backend/docs/      документация mini-framework
-IDEAS.md           roadmap и будущие идеи
-docker-compose.yml локальная инфраструктура
-README             общий README проекта
+backend/            PHP API, mini-framework, routes, migrations
+backend/Core/       ядро framework: Router, Container, Request, Response, CRUD
+backend/app/        controllers, models, middleware, bootstrap
+backend/docs/       документация backend mini-framework
+frontend/front/     Vue 3 SPA
+docker-compose.yml  локальная инфраструктура
+IDEAS.md            заметки и roadmap
 ```
 
-## Полезные команды
+## Полезные Команды
 
 ```bash
 docker compose up --build
 docker compose down
 docker compose exec backend php command.php migrate:run
+docker compose exec backend php command.php migrate:down
 docker compose exec backend php command.php migrate:fresh
 docker compose exec frontend npm run build
 ```
 
-## Проверка перед коммитом
+Локально:
 
 ```bash
-cd frontend/front
-npm run type-check
-npm run build
+cd backend
+composer install
+php command.php migrate:run
+php command.php serve
 
-cd ../../backend
-php -l Core/Router.php
-php -l app/Middleware/AuthMiddleware.php
-php -l app/Middleware/BoardMiddleware.php
-php -l app/Controllers/DefectsController.php
-php -l app/Controllers/StatusesController.php
+cd ../frontend/front
+npm install
+npm run dev
 ```
 
-## Подготовка к деплою
+## Проверка
 
-Перед деплоем нужно проверить:
+```bash
+cd backend
+php -l Core/Container.php
+php -l app/bootstrap/app.php
+php -l Core/Router.php
 
-- production `.env` для backend без dev-секретов;
-- корректные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`;
-- сильный `HASH_KEY_PASSWORD`;
-- значения ролей `BOARD_ROLE_ADMIN`, `BOARD_ROLE_DEVELOPER`, `BOARD_ROLE_GUEST`;
-- `SESSION_DRIVER=file` или `SESSION_DRIVER=redis` под выбранную инфраструктуру;
-- Redis-параметры, если используется `SESSION_DRIVER=redis`;
-- CORS и адрес frontend в backend entrypoint;
-- production API URL во frontend через `VITE_API_BASE_URL`;
-- успешный `npm run build`;
-- успешный запуск миграций на целевой базе;
-- права на запись runtime-логов backend.
+cd ../frontend/front
+npm run type-check
+npm run build
+```
 
 ## Документация
 
 - Backend: `backend/README.md`
 - Frontend: `frontend/front/README.md`
 - Mini-framework: `backend/docs/README.md`
-- Roadmap: `IDEAS.md`
+- DI container: `backend/docs/container.md`

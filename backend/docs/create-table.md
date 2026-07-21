@@ -1,55 +1,42 @@
 # CreateTable
 
-Путь к Core-файлу:
+Файл: `Core/CreateTable.php`
 
-`Core/CreateTable.php`
+`CreateTable` используется в миграциях для создания таблиц и изменения колонок.
 
-## Назначение
-
-`CreateTable` отвечает за простые миграции: создание таблицы, добавление колонки и удаление таблицы.
-
-Класс наследуется от `ConnectDB`, поэтому использует `$this->pdo` для выполнения SQL-команд.
-Успешные операции и ошибки записываются в `log/system.log`.
-
-## Пример создания таблицы
+## Конструктор
 
 ```php
-$table = new CreateTable('users');
-
-$table->createTable([
-    'id INT AUTO_INCREMENT PRIMARY KEY',
-    'name VARCHAR(255) NOT NULL',
-    'email VARCHAR(255) UNIQUE'
-]);
+public function __construct(string $name, ?Logger $logger = null)
+{
+    parent::__construct($logger);
+    $this->name = $name;
+}
 ```
 
-## Пример добавления колонки
+## Использование
+
+Миграции лежат в `database/Migrations`.
+
+Пример:
 
 ```php
-$table = new CreateTable('users');
-
-$table->addColumn('age INT');
+$table = new CreateTable('boards');
+$table->id();
+$table->string('title', 100);
+$table->integer('owner_id');
+$table->timestamps();
+$table->create();
 ```
 
-## Пример удаления таблицы
+Конкретный набор helper-методов смотри в `Core/CreateTable.php`.
 
-```php
-$table = new CreateTable('users');
+## Рекомендация
 
-$table->dropTable();
+Новые миграции называй с числовым префиксом:
+
+```text
+015_AddSomething.php
 ```
 
-## Как работает
-
-1. В конструктор передается имя таблицы.
-2. Родительский конструктор подключает PDO.
-3. `createTable()` собирает колонки в SQL-строку.
-4. `addColumn()` выполняет `ALTER TABLE`.
-5. `dropTable()` выполняет `DROP TABLE IF EXISTS`.
-
-## Важно
-
-Названия таблиц и описание колонок нельзя передавать в PDO через bind-параметры.
-Сейчас `CreateTable` вставляет их в SQL как строку, поэтому используй этот
-класс только с определениями таблиц, которые написаны в миграциях приложения,
-а не получены от пользователя.
+`MigrationManager` сортирует файлы по имени.

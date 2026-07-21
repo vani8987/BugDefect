@@ -18,10 +18,18 @@ interface BoardMemberControllerInterface {
 class BoardMemberController extends Controller implements BoardMemberControllerInterface {
     private BoardsMember $boardMember;
 
-    public function __construct() {
-        $this->boardMember = new BoardsMember();
+    public function __construct(
+        ?Request $request = null,
+        ?Response $response = null,
+        ?Logger $logger = null,
+        ?BoardsMember $boardMember = null
+    ) {
+        $request = $request ?? new Request();
+        $response = $response ?? new Response();
+        $logger = $logger ?? new Logger('BoardMember.log');
+        $this->boardMember = $boardMember ?? new BoardsMember($request);
 
-        parent::__construct(new Logger('BoardMember.log'), new Response(), new Request());
+        parent::__construct($logger, $response, $request);
     }
 
     public function getUsers(string $boardId): void {

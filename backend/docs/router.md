@@ -1,16 +1,10 @@
 # Router
 
-Путь к Core-файлу:
+Файл: `Core/Router.php`
 
-`Core/Router.php`
+`Router` регистрирует API-маршруты, ищет подходящий route для текущего HTTP-запроса, запускает middleware и вызывает controller.
 
-## Назначение
-
-`Router` получает URL и HTTP-метод, ищет подходящий маршрут, запускает middleware и вызывает нужный метод контроллера.
-
-Если маршрут не найден, возвращается JSON-ответ с ошибкой `404`. Ошибки маршрутов и middleware записываются в `log/system.log`.
-
-## Регистрация маршрута
+## Регистрация Маршрута
 
 ```php
 Router::route(
@@ -24,92 +18,44 @@ Router::route(
 
 Аргументы:
 
-1. URL маршрута.
-2. HTTP-метод.
-3. Массив `[ControllerClass::class, 'methodName']`.
-4. Старый флаг `auth` для обратной совместимости.
-5. Middleware-конфигурация или `null`.
+- route pattern;
+- HTTP method;
+- `[ControllerClass::class, 'methodName']`;
+- `auth` flag для `Auth::requireAuth()`;
+- optional middleware: `[MiddlewareClass::class, ['methodOne', 'methodTwo']]`.
 
-## Параметры маршрута
+## Параметры Маршрута
 
-Маршрут может содержать динамические параметры:
+Параметры в `{name}` превращаются в regex-группы. Значения передаются:
 
-```php
-Router::route('/api/boards/{boardId}/members/{userId}', 'DELETE', [BoardMemberController::class, 'deleteUser']);
-```
+- в controller method;
+- в middleware methods по количеству параметров метода.
 
-Для запроса `/api/boards/3/members/10` контроллер получит:
-
-```php
-$controller->deleteUser('3', '10');
-```
-
-Параметры передаются по порядку появления в URL.
+Например, `{boardId}` попадет в `boardAccess($boardId)`.
 
 ## Middleware
 
-Middleware передаётся пятым аргументом:
+`Router` создает middleware через DI container:
 
 ```php
-[BoardMiddleware::class, ['userAuth', 'boardAdmin']]
+$middleware = $this->container->make($middlewareClass);
 ```
 
-`Router` создаёт объект middleware и вызывает методы по порядку:
+Если middleware возвращает `false`, Router отвечает `401 Unauthorized`.
 
-1. `userAuth()`
-2. `boardAdmin($boardId)`
+## Controller
 
-Если любой middleware-метод возвращает `false`, запрос останавливается и API возвращает `401 Unauthorized`.
-
-## Передача параметров в middleware
-
-`Router` использует `ReflectionMethod`, чтобы понять, сколько аргументов ожидает middleware-метод.
-
-Например маршрут:
+Controller тоже создается через container:
 
 ```php
-/api/boards/{boardId}/members/{userId}
+$controller = $this->container->make($class);
+$controller->$functionClass(...$matches);
 ```
 
-даёт параметры:
+Поэтому controller должен быть зарегистрирован в `app/bootstrap/app.php`, если ему нужны зависимости.
 
-```php
-['3', '10']
-```
+## Ответы На Ошибки
 
-Если middleware-метод такой:
-
-```php
-public function userAuth(): bool
-```
-
-он получит `0` аргументов.
-
-Если метод такой:
-
-```php
-public function boardAdmin(string|int $boardId): bool
-```
-
-он получит только первый параметр маршрута — `boardId`.
-
-Это позволяет использовать одну цепочку middleware:
-
-```php
-[BoardMiddleware::class, ['userAuth', 'boardAdmin']]
-```
-
-без лишних аргументов для `userAuth()`.
-
-## Как работает dispatch
-
-1. Получает URL из `$_SERVER['REQUEST_URI']`.
-2. Получает HTTP-метод из `$_SERVER['REQUEST_METHOD']`.
-3. Перебирает зарегистрированные маршруты.
-4. Преобразует маршрут с `{params}` в регулярное выражение.
-5. Проверяет совпадение URL и метода.
-6. Извлекает динамические параметры маршрута.
-7. Проверяет существование контроллера и метода.
-8. Выполняет middleware, если они указаны.
-9. Создаёт контроллер и вызывает нужный метод с параметрами URL.
-10. Если совпадения нет, отправляет `404`.
+- `404` - route не найден.
+- `500` - controller/middleware/method не существует.
+- `401` - auth или middleware отклонили запрос.

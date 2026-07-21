@@ -26,14 +26,23 @@ class NotificationController extends Controller implements NotificationControlle
     private BoardsMember $boardsMember;
     private User $user;
 
-    public function __construct()
-    {
-        $this->inviteBoardMember = new InviteBoardMember();
-        $this->notification = new Notification();
-        $this->boardsMember = new BoardsMember();
-        $this->user = new User();
+    public function __construct(
+        ?Request $request = null,
+        ?Response $response = null,
+        ?Logger $logger = null,
+        ?Notification $notification = null,
+        ?InviteBoardMember $inviteBoardMember = null,
+        ?BoardsMember $boardsMember = null,
+        ?User $user = null
+    ) {
+        $request = $request ?? new Request();
+        $response = $response ?? new Response();
+        $this->inviteBoardMember = $inviteBoardMember ?? new InviteBoardMember();
+        $this->notification = $notification ?? new Notification();
+        $this->boardsMember = $boardsMember ?? new BoardsMember($request);
+        $this->user = $user ?? new User();
 
-        parent::__construct(new Logger('Notification.log'), new Response(), new Request());
+        parent::__construct($logger ?? new Logger('Notification.log'), $response, $request);
     }
 
     public function getAll(): void {

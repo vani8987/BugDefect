@@ -1,41 +1,50 @@
-# Документация Mini Framework
+# Mini Framework Docs
 
-Эта папка описывает классы и команды собственного mini-framework, на котором построен backend BugDefect.
+Эта папка описывает backend mini-framework, на котором работает BugDefect API.
 
 ## Разделы
 
-- `router.md` — роутинг, параметры маршрутов, middleware и запуск контроллеров.
-- `response.md` — отправка JSON-ответов.
-- `request.md` — получение данных из HTTP-запроса, JSON body и сессии.
-- `logger.md` — системное логирование Core-классов.
-- `controller.md` — базовый класс контроллеров и общая валидация.
-- `connect-db.md` — подключение к базе данных через PDO и `.env`.
-- `create-table.md` — создание таблиц и изменение колонок в миграциях.
-- `crud.md` — базовые операции с таблицами и правила безопасности.
-- `migrations.md` — запуск миграций через `MigrationManager`.
-- `commands.md` — консольные команды из `command.php`.
-- `auth.md` — регистрация, вход, сессии и защищённые маршруты.
+- `container.md` - DI container и `app/bootstrap/app.php`.
+- `router.md` - регистрация маршрутов, dispatch, middleware и создание controller через container.
+- `request.md` - получение данных из JSON, POST, GET, cookies и session.
+- `response.md` - JSON-ответы.
+- `controller.md` - базовый controller и общий helper `validate()`.
+- `middleware.md` - базовый middleware и middleware приложения.
+- `auth.md` - регистрация, вход, сессия и текущий пользователь.
+- `connect-db.md` - подключение к MySQL через PDO.
+- `crud.md` - базовые CRUD-операции моделей.
+- `create-table.md` - helper для миграций.
+- `migrations.md` - `MigrationManager` и CLI-команды миграций.
+- `commands.md` - команды из `command.php`.
+- `logger.md` - логирование.
 
-## Роль Core
+## Основной Поток Запроса
 
-`Core` — ядро backend-приложения. В нём лежат классы, которые не относятся к конкретной бизнес-логике, но нужны всему API: маршруты, middleware, запросы, ответы, подключение к базе, CRUD-операции, логирование и инструменты для миграций.
+1. `public/index.php` загружает Composer autoload, `.env`, session config и CORS.
+2. `public/index.php` подключает `app/bootstrap/app.php` и получает `Container`.
+3. `Routes/api.php` регистрирует маршруты через `Router::route()`.
+4. `Router` находит маршрут по URL и HTTP-методу.
+5. `Router` создает middleware и controller через `Container`.
+6. Controller валидирует входные данные, вызывает модели и возвращает JSON через `Response`.
 
-Бизнес-логика проекта находится выше — в `app/Controllers`, `app/Models`, `app/Middleware`, `Routes/api.php` и миграциях.
+## DI Container
 
-## Router и Middleware
-
-`Router` регистрирует маршруты через `Router::route()` и вызывает нужный контроллер. Маршрут может принимать middleware пятым аргументом:
+Новые зависимости регистрируются в `app/bootstrap/app.php`:
 
 ```php
-Router::route(
-    '/api/boards/{boardId}',
-    'GET',
-    [BoardsController::class, 'getBoard'],
-    false,
-    [BoardMiddleware::class, ['userAuth', 'boardAccess']]
-);
+$container->bind(Service::class, fn (Container $container): Service => new Service(
+    $container->make(Dependency::class)
+));
 ```
 
-Если маршрут содержит параметры, например `{boardId}`, `Router` передаёт их в middleware-методы, которые ожидают аргументы. Поэтому `userAuth()` вызывается без аргументов, а `boardAccess($boardId)` получает ID доски.
+Если класс используется в маршруте, лучше зарегистрировать его в bootstrap, чтобы `Router` создал его со всеми зависимостями.
 
-Базовый `Core\Middleware` хранит общие зависимости middleware: `Request` и `Logger`. Конкретные middleware приложения лежат в `app/Middleware`.
+## Обратная Совместимость
+
+Core-классы, модели, middleware и контроллеры сохраняют fallback-значения:
+
+```php
+$this->request = $request ?? new Request();
+```
+
+Поэтому классы можно создавать вручную в простых примерах и тестах, но основной runtime должен идти через container.

@@ -25,14 +25,26 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
     private InviteBoardMember $inviteBoardMember;
     private User $user;
 
-    function __construct(){
-        $this->boards = new Boards();
-        $this->user = new User;
-        $this->boardsMember = new BoardsMember();
-        $this->roles = new Roles();
-        $this->notification = new Notification();
-        $this->inviteBoardMember = new InviteBoardMember();
-        parent::__construct(new Logger('Board.log'), new Response(), new Request());
+    public function __construct(
+        ?Request $request = null,
+        ?Response $response = null,
+        ?Logger $logger = null,
+        ?Boards $boards = null,
+        ?BoardsMember $boardsMember = null,
+        ?Roles $roles = null,
+        ?Notification $notification = null,
+        ?InviteBoardMember $inviteBoardMember = null,
+        ?User $user = null
+    ) {
+        $request = $request ?? new Request();
+        $response = $response ?? new Response();
+        $this->boards = $boards ?? new Boards();
+        $this->user = $user ?? new User();
+        $this->boardsMember = $boardsMember ?? new BoardsMember($request);
+        $this->roles = $roles ?? new Roles();
+        $this->notification = $notification ?? new Notification();
+        $this->inviteBoardMember = $inviteBoardMember ?? new InviteBoardMember();
+        parent::__construct($logger ?? new Logger('Board.log'), $response, $request);
     }
 
     public function addUser(string $boardsId) {

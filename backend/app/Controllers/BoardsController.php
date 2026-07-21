@@ -23,13 +23,21 @@ class BoardsController extends Controller implements BoardsControllerInterface {
     private Roles $roles;
     private string $adminRoleName;
 
-    function __construct(){
-        $this->boards = new Boards();
-        $this->request = new Request();
-        $this->boardsMember = new BoardsMember();
-        $this->roles = new Roles();
+    public function __construct(
+        ?Request $request = null,
+        ?Response $response = null,
+        ?Logger $logger = null,
+        ?Boards $boards = null,
+        ?BoardsMember $boardsMember = null,
+        ?Roles $roles = null
+    ) {
+        $this->request = $request ?? new Request();
+        $this->response = $response ?? new Response();
+        $this->boards = $boards ?? new Boards();
+        $this->boardsMember = $boardsMember ?? new BoardsMember($this->request);
+        $this->roles = $roles ?? new Roles();
         $this->adminRoleName = $_ENV['BOARD_ROLE_ADMIN'] ?? getenv('BOARD_ROLE_ADMIN') ?: 'admin';
-        parent::__construct(new Logger('Board.log'), new Response(), new Request());
+        parent::__construct($logger ?? new Logger('Board.log'), $this->response, $this->request);
     }
 
     function createBoard() {

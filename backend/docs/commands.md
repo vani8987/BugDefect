@@ -1,48 +1,34 @@
-# Команды
+# Commands
 
-Путь к файлу:
+Файл: `command.php`
 
-`command.php`
-
-## Назначение
-
-`command.php` - простой консольный вход для команд мини-фреймворка.
-
-Команда берется из `$argv[1]`.
-
-## Миграции
-
-Запуск всех миграций:
+CLI-команды backend:
 
 ```bash
 php command.php migrate:run
-```
-
-Откат последнего batch миграций:
-
-```bash
 php command.php migrate:down
-```
-
-Полное пересоздание таблиц:
-
-```bash
 php command.php migrate:fresh
-```
-
-## Сервер
-
-Запуск встроенного PHP-сервера:
-
-```bash
 php command.php serve
 ```
 
-Сервер запускается на:
+## migrate:run
 
-```text
-localhost:8000
+Применяет новые миграции из `database/Migrations`.
+
+## migrate:down
+
+Откатывает последний batch миграций.
+
+## migrate:fresh
+
+Откатывает все примененные миграции и запускает их заново.
+
+Используй осторожно: команда пересоздает схему и может удалить данные.
+
+## serve
+
+Запускает PHP dev server:
+
+```bash
+php -S localhost:8000 -t public
 ```
-
-Перед запуском команд миграций подготовь `.env` по примеру `.env.example` и
-создай указанную в нём базу данных.

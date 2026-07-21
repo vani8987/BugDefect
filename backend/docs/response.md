@@ -1,30 +1,33 @@
 # Response
 
-Путь к Core-файлу:
+Файл: `Core/Response.php`
 
-`Core/Response.php`
+`Response` отправляет JSON-ответы.
 
-## Назначение
+## Конструктор
 
-`Response` отвечает за отправку данных пользователю.
+```php
+public function __construct(?Logger $logger = null)
+{
+    $this->logger = $logger ?? new Logger('system.log');
+}
+```
 
-Сейчас класс умеет отправлять JSON-ответы и выставлять HTTP-статус. Ошибки
-кодирования JSON записываются в `log/system.log`.
-
-## Пример
+## JSON
 
 ```php
 $response->json([
-    'message' => 'not found'
-], 404);
+    'message' => 'Board created',
+], 201);
 ```
 
-## Как работает
+Метод:
 
-1. Метод `json()` получает массив данных и HTTP-статус.
-2. Через `http_response_code()` выставляется статус ответа.
-3. Через `header()` выставляется `Content-Type: application/json`.
-4. Данные кодируются через `json_encode()`.
-5. Если кодирование прошло успешно, JSON отправляется пользователю.
-6. Если произошла ошибка кодирования, записывается лог и отправляется общий
-   ответ `500` без технических деталей.
+- выставляет HTTP status code;
+- добавляет `Content-Type: application/json; charset=UTF-8`;
+- кодирует массив через `json_encode()`;
+- при ошибке кодирования возвращает `500`.
+
+## Рекомендация
+
+Controllers должны возвращать ошибки и успешные ответы только через `Response::json()`, чтобы формат API оставался единым.
