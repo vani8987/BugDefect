@@ -45,27 +45,16 @@ class BoardsController extends Controller implements BoardsControllerInterface {
         $description = $this->request->getDataJson('description') ?? '';
         $user_id = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($user_id, FILTER_VALIDATE_INT) !== false && (int) $user_id > 0,
-            'Unauthorized.',
-            401
-        )) {
+        $user_id = $this->positiveId('Unauthorized.', $user_id, 401);
+        if ($user_id === null) {
             return;
         }
 
-        if (!$this->validate(
-            is_string($title) && trim($title) !== '' && mb_strlen(trim($title)) <= 100,
-            'Title is required and must be at most 100 characters.',
-            422
-        )) {
+        if (!$this->validateStringLength($title, 'Title is required and must be at most 100 characters.', countSymbol: 100)) {
             return;
         }
 
-        if (!$this->validate(
-            is_string($description) && mb_strlen(trim($description)) <= 255,
-            'Description must be at most 255 characters.',
-            422
-        )) {
+        if (!$this->validateStringLength($description, 'Description must be at most 255 characters.', required: false)) {
             return;
         }
 
@@ -105,15 +94,11 @@ class BoardsController extends Controller implements BoardsControllerInterface {
     }
 
     public function deleteBoard(string $boardId) {
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board ID must be a positive number.',
-            422
-        )) {
+        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
+        if ($boardId === null) {
             return;
         }
 
-        $boardId = (int) $boardId;
         $allMembers = $this->boardsMember->findAll(['user_id'], 'board_id', $boardId);
 
         foreach($allMembers as $member) {
@@ -186,11 +171,8 @@ class BoardsController extends Controller implements BoardsControllerInterface {
     public function getBoard(string $boardId) {
         $userId = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board ID must be a positive number.',
-            422
-        )) {
+        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
+        if ($boardId === null) {
             return;
         }
 

@@ -33,15 +33,12 @@ class BoardMemberController extends Controller implements BoardMemberControllerI
     }
 
     public function getUsers(string $boardId): void {
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board ID must be a positive number.',
-            422
-        )) {
+        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
+        if ($boardId === null) {
             return;
         }
 
-        $members = $this->boardMember->getMembersWithRoles((int) $boardId);
+        $members = $this->boardMember->getMembersWithRoles($boardId);
 
         $this->response->json([
             'members' => $members,
@@ -49,24 +46,16 @@ class BoardMemberController extends Controller implements BoardMemberControllerI
     }
 
     public function deleteUser(string $boardId, string $userId): void {
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board ID must be a positive number.',
-            422
-        )) {
+        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
+        if ($boardId === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'User ID must be a positive number.',
-            422
-        )) {
+        $userId = $this->positiveId('User ID must be a positive number.', $userId);
+        if ($userId === null) {
             return;
         }
 
-        $boardId = (int) $boardId;
-        $userId = (int) $userId;
         $member = $this->boardMember->findBoardMember($boardId, $userId);
 
         if (!$this->validate($member !== null, 'Board member was not found.', 404)) {

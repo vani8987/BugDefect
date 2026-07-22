@@ -48,15 +48,11 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
     }
 
     public function addUser(string $boardsId) {
-        if (!$this->validate(
-            filter_var($boardsId, FILTER_VALIDATE_INT) !== false && (int) $boardsId > 0,
-            'Board id is invalid',
-            422
-        )) {
+        $boardsId = $this->positiveId('Board id is invalid', $boardsId);
+        if ($boardsId === null) {
             return;
         }
 
-        $boardsId = (int) $boardsId;
         $board = $this->boards->find(['id'], $boardsId);
 
         if (!$this->validate($board !== null, 'Board not found', 404)) {
@@ -73,11 +69,8 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
         $role = $this->request->getDataJson('role');
         $inviter_user_id = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($inviter_user_id, FILTER_VALIDATE_INT) !== false && (int) $inviter_user_id > 0,
-            'Unauthorized',
-            401
-        )) {
+        $inviter_user_id = $this->positiveId('Unauthorized', $inviter_user_id, 401);
+        if ($inviter_user_id === null) {
             return;
         }
 
@@ -89,11 +82,7 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
             return;
         }
 
-        if (!$this->validate(
-            is_string($role) && trim($role) !== '',
-            'Role is empty',
-            422
-        )) {
+        if (!$this->validateStringLength($role, 'Role is empty')) {
             return;
         }
 
@@ -107,7 +96,7 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
         }
 
         if (!$this->validate(
-            (int) $invited_user['id'] !== (int) $inviter_user_id,
+            (int) $invited_user['id'] !== $inviter_user_id,
             'You cannot invite yourself',
             422
         )) {
@@ -162,7 +151,7 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
 
         $inviteCreate = $this->inviteBoardMember->create(
             ['board_id', 'invited_user_id', 'inviter_user_id', 'role_id'],
-            [$boardsId, (int) $invited_user['id'], (int) $inviter_user_id, (int) $role_data['id']]
+            [$boardsId, (int) $invited_user['id'], $inviter_user_id, (int) $role_data['id']]
         );
 
         if (!$this->validate(

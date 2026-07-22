@@ -48,18 +48,15 @@ class NotificationController extends Controller implements NotificationControlle
     public function getAll(): void {
         $userId = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Необходимо авторизоваться',
-            401
-        )) {
+        $userId = $this->positiveId('Необходимо авторизоваться', $userId, 401);
+        if ($userId === null) {
             return;
         }
 
         $allNotification = $this->notification->findAll(
             ['*'],
             'user_id',
-            (int) $userId
+            $userId
         );
 
         $notifications = array_map(function (array $notification): array {
@@ -94,18 +91,15 @@ class NotificationController extends Controller implements NotificationControlle
     public function markAllAsRead(): void {
         $userId = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Необходимо авторизоваться',
-            401
-        )) {
+        $userId = $this->positiveId('Необходимо авторизоваться', $userId, 401);
+        if ($userId === null) {
             return;
         }
 
         $allNotification = $this->notification->findAll(
             ['id', 'is_read'],
             'user_id',
-            (int) $userId
+            $userId
         );
 
         foreach ($allNotification as $notification) {
@@ -124,32 +118,27 @@ class NotificationController extends Controller implements NotificationControlle
     }
 
     public function acceptInvite(int $boardId): void {
-        if (!$this->validate($boardId > 0, 'Некорректный id доски', 422)) {
+        $boardId = $this->positiveId('Некорректный id доски', $boardId);
+        if ($boardId === null) {
             return;
         }
 
         $inviteId = $this->request->getDataJson('invite_id');
         $userId = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Необходимо авторизоваться',
-            401
-        )) {
+        $userId = $this->positiveId('Необходимо авторизоваться', $userId, 401);
+        if ($userId === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($inviteId, FILTER_VALIDATE_INT) !== false && (int) $inviteId > 0,
-            'Некорректный id приглашения',
-            422
-        )) {
+        $inviteId = $this->positiveId('Некорректный id приглашения', $inviteId);
+        if ($inviteId === null) {
             return;
         }
 
         $invite = $this->inviteBoardMember->find(
             ['id', 'board_id', 'invited_user_id', 'inviter_user_id', 'role_id', 'status'],
-            (int) $inviteId
+            $inviteId
         );
 
         if (!$this->validate($invite !== null, 'Приглашение не найдено', 404)) {
@@ -165,7 +154,7 @@ class NotificationController extends Controller implements NotificationControlle
         }
 
         if (!$this->validate(
-            (int) $invite['invited_user_id'] === (int) $userId,
+            (int) $invite['invited_user_id'] === $userId,
             'Приглашение не принадлежит текущему пользователю',
             403
         )) {
@@ -176,7 +165,7 @@ class NotificationController extends Controller implements NotificationControlle
             return;
         }
 
-        $memberships = $this->boardsMember->findAll(['id', 'board_id'], 'user_id', (int) $userId);
+        $memberships = $this->boardsMember->findAll(['id', 'board_id'], 'user_id', $userId);
 
         foreach ($memberships as $membership) {
             if ((int) $membership['board_id'] === $boardId) {
@@ -189,28 +178,28 @@ class NotificationController extends Controller implements NotificationControlle
 
         $memberCreated = $this->boardsMember->create(
             ['board_id', 'user_id', 'role_id'],
-            [$boardId, (int) $userId, (int) $invite['role_id']]
+            [$boardId, $userId, (int) $invite['role_id']]
         );
 
         if (!$this->validate($memberCreated, 'Не удалось добавить пользователя в доску', 500)) {
             return;
         }
 
-        $inviteUpdated = $this->inviteBoardMember->update(['status'], ['accepted'], (int) $inviteId);
+        $inviteUpdated = $this->inviteBoardMember->update(['status'], ['accepted'], $inviteId);
 
         if (!$this->validate($inviteUpdated, 'Не удалось обновить приглашение', 500)) {
             return;
         }
 
-        $user = $this->user->find(['name'], (int) $userId);
+        $user = $this->user->find(['name'], $userId);
 
         if (!$this->validate($user !== null, 'Пользователь не найден', 404)) {
             return;
         }
 
         $notificationData = json_encode([
-            'invite_id' => (int) $inviteId,
-            'invited_user_id' => (int) $userId,
+            'invite_id' => $inviteId,
+            'invited_user_id' => $userId,
             'board_id' => $boardId
         ]);
 
@@ -239,32 +228,27 @@ class NotificationController extends Controller implements NotificationControlle
     }
 
     public function rejectInvite(int $boardId): void {
-        if (!$this->validate($boardId > 0, 'Некорректный id доски', 422)) {
+        $boardId = $this->positiveId('Некорректный id доски', $boardId);
+        if ($boardId === null) {
             return;
         }
 
         $inviteId = $this->request->getDataJson('invite_id');
         $userId = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($userId, FILTER_VALIDATE_INT) !== false && (int) $userId > 0,
-            'Необходимо авторизоваться',
-            401
-        )) {
+        $userId = $this->positiveId('Необходимо авторизоваться', $userId, 401);
+        if ($userId === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($inviteId, FILTER_VALIDATE_INT) !== false && (int) $inviteId > 0,
-            'Некорректный id приглашения',
-            422
-        )) {
+        $inviteId = $this->positiveId('Некорректный id приглашения', $inviteId);
+        if ($inviteId === null) {
             return;
         }
 
         $invite = $this->inviteBoardMember->find(
             ['id', 'board_id', 'invited_user_id', 'inviter_user_id', 'status'],
-            (int) $inviteId
+            $inviteId
         );
 
         if (!$this->validate($invite !== null, 'Приглашение не найдено', 404)) {
@@ -280,7 +264,7 @@ class NotificationController extends Controller implements NotificationControlle
         }
 
         if (!$this->validate(
-            (int) $invite['invited_user_id'] === (int) $userId,
+            (int) $invite['invited_user_id'] === $userId,
             'Приглашение не принадлежит текущему пользователю',
             403
         )) {
@@ -291,21 +275,21 @@ class NotificationController extends Controller implements NotificationControlle
             return;
         }
 
-        $inviteUpdated = $this->inviteBoardMember->update(['status'], ['declined'], (int) $inviteId);
+        $inviteUpdated = $this->inviteBoardMember->update(['status'], ['declined'], $inviteId);
 
         if (!$this->validate($inviteUpdated, 'Не удалось обновить приглашение', 500)) {
             return;
         }
 
-        $user = $this->user->find(['name'], (int) $userId);
+        $user = $this->user->find(['name'], $userId);
 
         if (!$this->validate($user !== null, 'Пользователь не найден', 404)) {
             return;
         }
 
         $notificationData = json_encode([
-            'invite_id' => (int) $inviteId,
-            'invited_user_id' => (int) $userId,
+            'invite_id' => $inviteId,
+            'invited_user_id' => $userId,
             'board_id' => $boardId
         ]);
 

@@ -39,56 +39,35 @@ class DefectsController extends Controller {
     public function createDefect(int $boardId) {
         $appointed_user_id = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board id is invalid',
-            422
-        )) {
+        $boardsId = $this->positiveId('Board id is invalid', $boardId);
+        if ($boardsId === null) {
             return;
         }
 
-        $boardsId = (int) $boardId;
         $statusId = $this->request->getDataJson('statusId');
         $executorID = $this->request->getDataJson('executorID');
         $title = $this->request->getDataJson('title');
         $description = $this->request->getDataJson('description') ?? '';
 
-        if (!$this->validate(
-            filter_var($statusId, FILTER_VALIDATE_INT) !== false && (int) $statusId > 0,
-            'Status id is invalid',
-            422
-        )) {
+        $statusId = $this->positiveId('Status id is invalid', $statusId);
+        if ($statusId === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($executorID, FILTER_VALIDATE_INT) !== false && (int) $executorID > 0,
-            'Executor id is invalid',
-            422
-        )) {
+        $executorID = $this->positiveId('Executor id is invalid', $executorID);
+        if ($executorID === null) {
             return;
         }
 
-        if (!$this->validate(
-            is_string($title) && trim($title) !== '' && mb_strlen(trim($title)) <= 100,
-            'Title is required and must be at most 100 characters.',
-            422
-        )) {
+        if (!$this->validateStringLength($title, 'Title is required and must be at most 100 characters.', countSymbol: 100)) {
             return;
         }
 
-        if (!$this->validate(
-            is_string($description) &&
-            mb_strlen(trim($description)) <= 5000,
-            'Description must be at most 5000 characters.',
-            422
-        )) {
+        if (!$this->validateStringLength($description, 'Description must be at most 5000 characters.', countSymbol: 5000, required: false)) {
             return;
         }
 
         $appointed_user_id = (int) $appointed_user_id;
-        $statusId = (int) $statusId;
-        $executorID = (int) $executorID;
         $title = trim($title);
         $description = trim($description);
 
@@ -123,39 +102,28 @@ class DefectsController extends Controller {
     public function getAllinStatus(int $boardId, int $statusId) {
         $appointed_user_id = $this->request->getDataSession('auth_user_id');
 
-        if (!$this->validate(
-            filter_var($appointed_user_id, FILTER_VALIDATE_INT) !== false && (int) $appointed_user_id > 0,
-            'Unauthorized.',
-            401
-        )) {
+        $appointed_user_id = $this->positiveId('Unauthorized.', $appointed_user_id, 401);
+        if ($appointed_user_id === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board id is invalid',
-            422
-        )) {
+        $boardsId = $this->positiveId('Board id is invalid', $boardId);
+        if ($boardsId === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($statusId, FILTER_VALIDATE_INT) !== false && (int) $statusId > 0,
-            'Status id is invalid',
-            422
-        )) {
+        $statusId = $this->positiveId('Status id is invalid', $statusId);
+        if ($statusId === null) {
             return;
         }
 
-        $boardsId = (int) $boardId;
-        $statusId = (int) $statusId;
         $board = $this->boards->find(['id'], $boardsId);
 
         if (!$this->validate($board !== null, 'Board not found', 404)) {
             return;
         }
 
-        $member = $this->boardsMember->findBoardMember($boardsId, (int) $appointed_user_id);
+        $member = $this->boardsMember->findBoardMember($boardsId, $appointed_user_id);
 
         if (!$this->validate($member !== null, 'Access to this board is denied.', 403)) {
             return;
@@ -173,45 +141,28 @@ class DefectsController extends Controller {
     }
 
     public function moveDefect(int $boardId, int $defectId) {
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board id is invalid',
-            422
-        )) {
+        $boardId = $this->positiveId('Board id is invalid', $boardId);
+        if ($boardId === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($defectId, FILTER_VALIDATE_INT) !== false && (int) $defectId > 0,
-            'Defect id is invalid',
-            422
-        )) {
+        $defectId = $this->positiveId('Defect id is invalid', $defectId);
+        if ($defectId === null) {
             return;
         }
 
         $statusId = $this->request->getDataJson('statusId');
         $position = $this->request->getDataJson('position');
 
-        if (!$this->validate(
-            filter_var($statusId, FILTER_VALIDATE_INT) !== false && (int) $statusId > 0,
-            'Status id is invalid',
-            422
-        )) {
+        $statusId = $this->positiveId('Status id is invalid', $statusId);
+        if ($statusId === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($position, FILTER_VALIDATE_INT) !== false && (int) $position > 0,
-            'Position is invalid',
-            422
-        )) {
+        $position = $this->positiveId('Position is invalid', $position);
+        if ($position === null) {
             return;
         }
-
-        $boardId = (int) $boardId;
-        $defectId = (int) $defectId;
-        $statusId = (int) $statusId;
-        $position = (int) $position;
 
         $defect = $this->defect->findByBoardAndId($boardId, $defectId);
 

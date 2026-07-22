@@ -29,46 +29,30 @@ class StatusesController extends Controller {
     }
 
     public function createStatuses(string $boardId) {
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board id is invalid',
-            422
-        )) {
+        $boardId = $this->positiveId('Board id is invalid', $boardId);
+        if ($boardId === null) {
             return;
         }
 
-        $boardId = (int) $boardId;
         $title = $this->request->getDataJson('title');
         $description = $this->request->getDataJson('description') ?? '';
         $position = $this->request->getDataJson('position');
 
-        if (!$this->validate(
-            is_string($title) && trim($title) !== '' && mb_strlen(trim($title)) <= 100,
-            'Title is required and must be at most 100 characters.',
-            422
-        )) {
+        if (!$this->validateStringLength($title, 'Title is required and must be at most 100 characters.', countSymbol: 100)) {
             return;
         }
 
-        if (!$this->validate(
-            is_string($description) && mb_strlen(trim($description)) <= 255,
-            'Description must be at most 255 characters.',
-            422
-        )) {
+        if (!$this->validateStringLength($description, 'Description must be at most 255 characters.', required: false)) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($position, FILTER_VALIDATE_INT) !== false && (int) $position > 0,
-            'Position must be a positive number.',
-            422
-        )) {
+        $position = $this->positiveId('Position must be a positive number.', $position);
+        if ($position === null) {
             return;
         }
         
         $title = trim($title);
         $description = trim($description);
-        $position = (int) $position;
 
         $createStatus = $this->statuses->create(
             ['title', 'board_id', 'position', 'description'],
@@ -85,15 +69,11 @@ class StatusesController extends Controller {
     }
 
     public function getAll(string $boardId) {
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board id is invalid',
-            422
-        )) {
+        $boardId = $this->positiveId('Board id is invalid', $boardId);
+        if ($boardId === null) {
             return;
         }
 
-        $boardId = (int) $boardId;
         $allStatuses = array_map(function (array $status) use ($boardId) {
             $status['items'] = $this->defect->findAllByBoardAndStatus($boardId, (int) $status['id']);
             return $status;
@@ -105,15 +85,11 @@ class StatusesController extends Controller {
     }
 
     public function updatePosition(string $boardId) {
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board id is invalid',
-            422
-        )) {
+        $boardId = $this->positiveId('Board id is invalid', $boardId);
+        if ($boardId === null) {
             return;
         }
 
-        $boardId = (int) $boardId;
         $allStatuses = $this->request->getDataJson('statuses');
 
         if (!$this->validate(is_array($allStatuses), 'Statuses must be an array.', 422)) {
@@ -121,24 +97,20 @@ class StatusesController extends Controller {
         }
 
         foreach ($allStatuses as $status) {
-            if (!$this->validate(
-                is_array($status)
-                && isset($status['id'], $status['position'])
-                && filter_var($status['id'], FILTER_VALIDATE_INT) !== false
-                && (int) $status['id'] > 0
-                && filter_var($status['position'], FILTER_VALIDATE_INT) !== false
-                && (int) $status['position'] > 0,
-                'Status id and position must be positive numbers.',
-                422
-            )) {
+            if (!$this->validate(is_array($status) && isset($status['id'], $status['position']), 'Status id and position must be positive numbers.', 422)) {
                 return;
             }
 
-            $idStatus = $status['id'];
-            $positionStatus = $status['position'];
+            $idStatus = $this->positiveId('Status id and position must be positive numbers.', $status['id']);
+            if ($idStatus === null) {
+                return;
+            }
 
-            $idStatus = (int) $idStatus;
-            $positionStatus = (int) $positionStatus;
+            $positionStatus = $this->positiveId('Status id and position must be positive numbers.', $status['position']);
+            if ($positionStatus === null) {
+                return;
+            }
+
             $statusInSql = $this->statuses->findPositionByBoardAndStatus($boardId, $idStatus);
 
             if (!$this->validate($statusInSql !== null, 'Status was not found in this board.', 404)) {
@@ -160,24 +132,16 @@ class StatusesController extends Controller {
     }
 
     public function deleteStatus(string $boardId, string $statusId) {
-        if (!$this->validate(
-            filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0,
-            'Board ID must be a positive number.',
-            422
-        )) {
+        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
+        if ($boardId === null) {
             return;
         }
 
-        if (!$this->validate(
-            filter_var($statusId, FILTER_VALIDATE_INT) !== false && (int) $statusId > 0,
-            'Status ID must be a positive number.',
-            422
-        )) {
+        $statusId = $this->positiveId('Status ID must be a positive number.', $statusId);
+        if ($statusId === null) {
             return;
         }
 
-        $boardId = (int) $boardId;
-        $statusId = (int) $statusId;
         $statusDeleted = $this->statuses->deleteByBoardAndStatus($boardId, $statusId);
 
         if (!$this->validate($statusDeleted, 'Unable to delete status.', 500)) {

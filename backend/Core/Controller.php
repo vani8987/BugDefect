@@ -27,5 +27,39 @@ class Controller
         return false;
     }
 
-    
+    protected function positiveId(string $message, mixed $id, int $status = 422): int|null {
+        if (!$this->validate(
+            filter_var($id, FILTER_VALIDATE_INT) !== false && (int) $id > 0,
+            $message,
+            $status
+        )) {
+            return null;
+        }
+
+        return (int) $id;
+    }
+
+    protected function validateStringLength(
+        mixed $dataString,
+        string $message,
+        int $status = 422,
+        int $countSymbol = 255,
+        bool $required = true
+    ): bool {
+        if (!is_string($dataString)) {
+            return $this->validate(false, $message, $status);
+        }
+
+        $dataString = trim($dataString);
+
+        if ($required && $dataString === '') {
+            return $this->validate(false, $message, $status);
+        }
+
+        return $this->validate(
+            mb_strlen($dataString) <= $countSymbol,
+            $message,
+            $status
+        );
+    }
 }
