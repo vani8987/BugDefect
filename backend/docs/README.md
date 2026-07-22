@@ -8,7 +8,7 @@
 - `router.md` - регистрация маршрутов, dispatch, middleware и создание controller через container.
 - `request.md` - получение данных из JSON, POST, GET, cookies и session.
 - `response.md` - JSON-ответы.
-- `controller.md` - базовый controller и общий helper `validate()`.
+- `controller.md` - базовый controller, `validate()`, `positiveId()` и `validateStringLength()`.
 - `middleware.md` - базовый middleware и middleware приложения.
 - `auth.md` - регистрация, вход, сессия и текущий пользователь.
 - `connect-db.md` - подключение к MySQL через PDO.
@@ -26,6 +26,11 @@
 4. `Router` находит маршрут по URL и HTTP-методу.
 5. `Router` создает middleware и controller через `Container`.
 6. Controller валидирует входные данные, вызывает модели и возвращает JSON через `Response`.
+
+Типовые проверки входных данных вынесены в helper-ы базового controller:
+
+- `positiveId()` - проверка и приведение положительного id;
+- `validateStringLength()` - проверка строки, обязательности и максимальной длины.
 
 ## DI Container
 

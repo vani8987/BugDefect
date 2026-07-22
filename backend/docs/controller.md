@@ -53,3 +53,47 @@ if (!$this->validate($board !== null, 'Board was not found.', 404)) {
 ```
 
 Это общий способ останавливать controller action при ошибке входных данных или бизнес-логики.
+
+## positiveId()
+
+`positiveId()` проверяет типовой параметр id:
+
+- значение должно быть integer-compatible;
+- значение должно быть больше `0`;
+- при ошибке отправляется JSON через `validate()`;
+- при успехе возвращается уже приведенный `int`.
+
+```php
+$boardId = $this->positiveId('Board id is invalid', $boardId);
+
+if ($boardId === null) {
+    return;
+}
+```
+
+Это заменяет повторяющиеся проверки вида:
+
+```php
+filter_var($boardId, FILTER_VALIDATE_INT) !== false && (int) $boardId > 0
+```
+
+## validateStringLength()
+
+`validateStringLength()` проверяет строковое поле:
+
+- значение должно быть строкой;
+- если `$required = true`, строка не может быть пустой;
+- длина после `trim()` не должна превышать `$countSymbol`;
+- status по умолчанию `422`.
+
+```php
+if (!$this->validateStringLength($title, 'Title is required and must be at most 100 characters.', countSymbol: 100)) {
+    return;
+}
+
+if (!$this->validateStringLength($description, 'Description must be at most 255 characters.', required: false)) {
+    return;
+}
+```
+
+Эти helper-ы нужны только для типовой HTTP-валидации. Проверки существования записей, результата удаления или бизнес-правил пока остаются в controller, а позже могут быть вынесены в service layer.
