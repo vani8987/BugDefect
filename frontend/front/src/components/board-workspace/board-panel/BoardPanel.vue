@@ -39,6 +39,7 @@
         @delete-status="deleteStatus"
         @defect-drag-start="defectDragStart"
         @defect-drop="defectDrop"
+        @delete-defect="deleteDefect"
       />
     </div>
 
@@ -62,6 +63,7 @@
 import UiButton from '@/components/ui/button/UiButton.vue'
 import StatusColumn from '../status-column/StatusColumn.vue'
 import type { BoardStatusColumn } from '@/Ts/status'
+import type { DeleteDefectPayload } from '../types'
 
 defineProps<{
   columns: BoardStatusColumn[]
@@ -77,6 +79,7 @@ const emit = defineEmits<{
   (e: 'statusDragEnd'): void
   (e: 'defectDragStart', value: { defectId: number; statusId: number }): void
   (e: 'defectDrop', value: { statusId: number }): void
+  (e: 'deleteDefect', value: DeleteDefectPayload): void
 }>()
 
 function statusDragStart(value: number): void {
@@ -101,6 +104,10 @@ function defectDragStart(value: { defectId: number; statusId: number }): void {
 
 function defectDrop(value: { statusId: number }): void {
   emit('defectDrop', value)
+}
+
+function deleteDefect(value: DeleteDefectPayload): void {
+  emit('deleteDefect', value)
 }
 </script>
 

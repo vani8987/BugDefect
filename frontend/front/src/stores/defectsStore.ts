@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { ApiMessage } from '@/Ts/api'
-import type { MoveDefect, NewDefect } from '@/Ts/defect'
+import type { DeleteDefect, MoveDefect, NewDefect } from '@/Ts/defect'
 import { api } from '@/utils/api'
 import { execute, type RequestState } from '@/utils/execute'
 
@@ -45,11 +45,29 @@ export const useDefectsStore = defineStore('defectsStore', () => {
     return data !== null
   }
 
+  const deleteDefect = async (
+    boardId: number | string,
+    defectId: number,
+    defect: DeleteDefect,
+  ): Promise<boolean> => {
+    const data = await execute<ApiMessage>(
+      () => api.delete(`/boards/${boardId}/defects/${defectId}`, { data: defect }),
+      states,
+    )
+
+    if (data !== null) {
+      message.value = data.message
+    }
+
+    return data !== null
+  }
+
   return {
     loading,
     error,
     message,
     createDefect,
     moveDefect,
+    deleteDefect,
   }
 })

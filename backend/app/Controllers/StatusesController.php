@@ -29,10 +29,8 @@ class StatusesController extends Controller {
     }
 
     public function createStatuses(string $boardId) {
-        $boardId = $this->positiveId('Board id is invalid', $boardId);
-        if ($boardId === null) {
-            return;
-        }
+        if ($this->positiveId('Board id is invalid', $boardId) === null) return;
+        $boardId = (int) $boardId;
 
         $title = $this->request->getDataJson('title');
         $description = $this->request->getDataJson('description') ?? '';
@@ -46,10 +44,8 @@ class StatusesController extends Controller {
             return;
         }
 
-        $position = $this->positiveId('Position must be a positive number.', $position);
-        if ($position === null) {
-            return;
-        }
+        if ($this->positiveId('Position must be a positive number.', $position) === null) return;
+        $position = (int) $position;
         
         $title = trim($title);
         $description = trim($description);
@@ -69,10 +65,8 @@ class StatusesController extends Controller {
     }
 
     public function getAll(string $boardId) {
-        $boardId = $this->positiveId('Board id is invalid', $boardId);
-        if ($boardId === null) {
-            return;
-        }
+        if ($this->positiveId('Board id is invalid', $boardId) === null) return;
+        $boardId = (int) $boardId;
 
         $allStatuses = array_map(function (array $status) use ($boardId) {
             $status['items'] = $this->defect->findAllByBoardAndStatus($boardId, (int) $status['id']);
@@ -85,10 +79,8 @@ class StatusesController extends Controller {
     }
 
     public function updatePosition(string $boardId) {
-        $boardId = $this->positiveId('Board id is invalid', $boardId);
-        if ($boardId === null) {
-            return;
-        }
+        if ($this->positiveId('Board id is invalid', $boardId) === null) return;
+        $boardId = (int) $boardId;
 
         $allStatuses = $this->request->getDataJson('statuses');
 
@@ -101,15 +93,11 @@ class StatusesController extends Controller {
                 return;
             }
 
-            $idStatus = $this->positiveId('Status id and position must be positive numbers.', $status['id']);
-            if ($idStatus === null) {
-                return;
-            }
+            if ($this->positiveId('Status id and position must be positive numbers.', $status['id']) === null) return;
+            $idStatus = (int) $status['id'];
 
-            $positionStatus = $this->positiveId('Status id and position must be positive numbers.', $status['position']);
-            if ($positionStatus === null) {
-                return;
-            }
+            if ($this->positiveId('Status id and position must be positive numbers.', $status['position']) === null) return;
+            $positionStatus = (int) $status['position'];
 
             $statusInSql = $this->statuses->findPositionByBoardAndStatus($boardId, $idStatus);
 
@@ -132,15 +120,11 @@ class StatusesController extends Controller {
     }
 
     public function deleteStatus(string $boardId, string $statusId) {
-        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
-        if ($boardId === null) {
-            return;
-        }
+        if ($this->positiveId('Board ID must be a positive number.', $boardId) === null) return;
+        $boardId = (int) $boardId;
 
-        $statusId = $this->positiveId('Status ID must be a positive number.', $statusId);
-        if ($statusId === null) {
-            return;
-        }
+        if ($this->positiveId('Status ID must be a positive number.', $statusId) === null) return;
+        $statusId = (int) $statusId;
 
         $statusDeleted = $this->statuses->deleteByBoardAndStatus($boardId, $statusId);
 

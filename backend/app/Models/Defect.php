@@ -97,4 +97,24 @@ class Defect extends CRUD {
             return false;
         }
     }
+
+    public function deleteDefectByBoard(
+        int $boardId,
+        int $defectId,
+        int $statusId,
+    ): bool {
+        try {
+            $statement = $this->pdo->prepare("
+                DELETE FROM defects
+                WHERE board_id = ? AND id = ? AND status_id = ?
+            ");
+
+            $statement->execute([$boardId, $defectId, $statusId]);
+
+            return $statement->rowCount() > 0;
+        } catch (Exception $err) {
+            $this->logger->error('Delete defect failed: ' . $err->getMessage());
+            return false;
+        }
+    }
 }

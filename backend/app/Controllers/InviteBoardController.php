@@ -48,10 +48,8 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
     }
 
     public function addUser(string $boardsId) {
-        $boardsId = $this->positiveId('Board id is invalid', $boardsId);
-        if ($boardsId === null) {
-            return;
-        }
+        if ($this->positiveId('Board id is invalid', $boardsId) === null) return;
+        $boardsId = (int) $boardsId;
 
         $board = $this->boards->find(['id'], $boardsId);
 
@@ -69,10 +67,8 @@ class InviteBoardController extends Controller implements InviteBoardControllerI
         $role = $this->request->getDataJson('role');
         $inviter_user_id = $this->request->getDataSession('auth_user_id');
 
-        $inviter_user_id = $this->positiveId('Unauthorized', $inviter_user_id, 401);
-        if ($inviter_user_id === null) {
-            return;
-        }
+        if ($this->positiveId('Unauthorized', $inviter_user_id, 401) === null) return;
+        $inviter_user_id = (int) $inviter_user_id;
 
         if (!$this->validate(
             is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL) !== false,

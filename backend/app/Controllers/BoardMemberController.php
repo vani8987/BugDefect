@@ -33,10 +33,8 @@ class BoardMemberController extends Controller implements BoardMemberControllerI
     }
 
     public function getUsers(string $boardId): void {
-        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
-        if ($boardId === null) {
-            return;
-        }
+        if ($this->positiveId('Board ID must be a positive number.', $boardId) === null) return;
+        $boardId = (int) $boardId;
 
         $members = $this->boardMember->getMembersWithRoles($boardId);
 
@@ -46,15 +44,11 @@ class BoardMemberController extends Controller implements BoardMemberControllerI
     }
 
     public function deleteUser(string $boardId, string $userId): void {
-        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
-        if ($boardId === null) {
-            return;
-        }
+        if ($this->positiveId('Board ID must be a positive number.', $boardId) === null) return;
+        $boardId = (int) $boardId;
 
-        $userId = $this->positiveId('User ID must be a positive number.', $userId);
-        if ($userId === null) {
-            return;
-        }
+        if ($this->positiveId('User ID must be a positive number.', $userId) === null) return;
+        $userId = (int) $userId;
 
         $member = $this->boardMember->findBoardMember($boardId, $userId);
 

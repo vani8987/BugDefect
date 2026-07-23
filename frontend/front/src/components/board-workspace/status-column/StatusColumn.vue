@@ -54,8 +54,10 @@
         v-for="item in column.items"
         :key="item.id"
         :item="item"
+        :can-manage="canManage"
         draggable="true"
         @dragstart.stop="startDefectDrag($event, item.id)"
+        @delete-defect="deleteDefect"
       />
 
       <p v-if="column.items.length === 0" class="status-column__empty">
@@ -68,6 +70,7 @@
 <script setup lang="ts">
 import DefectCard from '../defect-card/DefectCard.vue'
 import type { BoardStatusColumn } from '@/Ts/status'
+import type { DeleteDefectPayload } from '../types'
 
 const props = defineProps<{
   column: BoardStatusColumn
@@ -81,6 +84,7 @@ const emit = defineEmits<{
   (e: 'statusDragEnd'): void
   (e: 'defectDragStart', value: { defectId: number; statusId: number }): void
   (e: 'defectDrop', value: { statusId: number }): void
+  (e: 'deleteDefect', value: DeleteDefectPayload): void
 }>()
 
 function startStatusDrag(event: DragEvent): void {
@@ -118,6 +122,10 @@ function dropDefect(): void {
   emit('defectDrop', {
     statusId: props.column.id,
   })
+}
+
+function deleteDefect(value: DeleteDefectPayload): void {
+  emit('deleteDefect', value)
 }
 </script>
 

@@ -45,10 +45,8 @@ class BoardsController extends Controller implements BoardsControllerInterface {
         $description = $this->request->getDataJson('description') ?? '';
         $user_id = $this->request->getDataSession('auth_user_id');
 
-        $user_id = $this->positiveId('Unauthorized.', $user_id, 401);
-        if ($user_id === null) {
-            return;
-        }
+        if ($this->positiveId('Unauthorized.', $user_id, 401) === null) return;
+        $user_id = (int) $user_id;
 
         if (!$this->validateStringLength($title, 'Title is required and must be at most 100 characters.', countSymbol: 100)) {
             return;
@@ -94,10 +92,8 @@ class BoardsController extends Controller implements BoardsControllerInterface {
     }
 
     public function deleteBoard(string $boardId) {
-        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
-        if ($boardId === null) {
-            return;
-        }
+        if ($this->positiveId('Board ID must be a positive number.', $boardId) === null) return;
+        $boardId = (int) $boardId;
 
         $allMembers = $this->boardsMember->findAll(['user_id'], 'board_id', $boardId);
 
@@ -171,10 +167,8 @@ class BoardsController extends Controller implements BoardsControllerInterface {
     public function getBoard(string $boardId) {
         $userId = $this->request->getDataSession('auth_user_id');
 
-        $boardId = $this->positiveId('Board ID must be a positive number.', $boardId);
-        if ($boardId === null) {
-            return;
-        }
+        if ($this->positiveId('Board ID must be a positive number.', $boardId) === null) return;
+        $boardId = (int) $boardId;
 
         $membership = $this->boardsMember->findBoardMember((int) $boardId, (int) $userId);
 

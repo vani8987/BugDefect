@@ -131,6 +131,7 @@ DELETE /api/status/{boardId}/{statusId}
 
 POST   /api/boards/{boardId}/defects
 PATCH  /api/boards/{boardId}/defects/{defectId}/move
+DELETE /api/boards/{boardId}/defects/{defectId}
 ```
 
 ## Команды

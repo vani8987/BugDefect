@@ -63,6 +63,20 @@ export const useStatusesStore = defineStore('statusesStore', () => {
         return data !== null
     }
 
+    const deleteDefectInArray = (
+        boardId: number | string,
+        defectId: number,
+        statusId: number,
+    ): void => {
+        const column = boardColumns.value.find((status) => status.id === statusId)
+
+        if (column === undefined) return
+
+        column.items = column.items.filter((defect) => {
+            return !(defect.id === defectId && defect.board_id === Number(boardId))
+        })
+    }
+
     return {
         boardColumns,
         loading,
@@ -71,6 +85,7 @@ export const useStatusesStore = defineStore('statusesStore', () => {
         getAll,
         createStatus,
         deleteStatus,
-        updatePosition
+        updatePosition,
+        deleteDefectInArray,
     }
 })
