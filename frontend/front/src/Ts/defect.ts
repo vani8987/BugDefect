@@ -9,3 +9,7 @@ export interface MoveDefect {
   statusId: number
   position: number
 }
+
+export interface DeleteDefect {
+  statusId: number
+}

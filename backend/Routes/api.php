@@ -45,3 +45,4 @@ Router::route('/api/status/{boardId}/{statusId}', 'DELETE', [StatusesController:
 // Дефекты
 Router::route('/api/boards/{boardId}/defects', 'POST', [DefectsController::class, 'createDefect'], false, $boardAdminMiddleware);
 Router::route('/api/boards/{boardId}/defects/{defectId}/move', 'PATCH', [DefectsController::class, 'moveDefect'], false, $boardAdminMiddleware);
+Router::route('/api/boards/{boardId}/defects/{defectId}', 'DELETE', [DefectsController::class, 'deleteDefect'], false, $boardAdminMiddleware);

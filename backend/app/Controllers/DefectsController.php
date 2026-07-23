@@ -39,25 +39,19 @@ class DefectsController extends Controller {
     public function createDefect(int $boardId) {
         $appointed_user_id = $this->request->getDataSession('auth_user_id');
 
-        $boardsId = $this->positiveId('Board id is invalid', $boardId);
-        if ($boardsId === null) {
-            return;
-        }
+        if ($this->positiveId('Board id is invalid', $boardId) === null) return;
+        $boardsId = (int) $boardId;
 
         $statusId = $this->request->getDataJson('statusId');
         $executorID = $this->request->getDataJson('executorID');
         $title = $this->request->getDataJson('title');
         $description = $this->request->getDataJson('description') ?? '';
 
-        $statusId = $this->positiveId('Status id is invalid', $statusId);
-        if ($statusId === null) {
-            return;
-        }
+        if ($this->positiveId('Status id is invalid', $statusId) === null) return;
+        $statusId = (int) $statusId;
 
-        $executorID = $this->positiveId('Executor id is invalid', $executorID);
-        if ($executorID === null) {
-            return;
-        }
+        if ($this->positiveId('Executor id is invalid', $executorID) === null) return;
+        $executorID = (int) $executorID;
 
         if (!$this->validateStringLength($title, 'Title is required and must be at most 100 characters.', countSymbol: 100)) {
             return;
@@ -102,20 +96,14 @@ class DefectsController extends Controller {
     public function getAllinStatus(int $boardId, int $statusId) {
         $appointed_user_id = $this->request->getDataSession('auth_user_id');
 
-        $appointed_user_id = $this->positiveId('Unauthorized.', $appointed_user_id, 401);
-        if ($appointed_user_id === null) {
-            return;
-        }
+        if ($this->positiveId('Unauthorized.', $appointed_user_id, 401) === null) return;
+        $appointed_user_id = (int) $appointed_user_id;
 
-        $boardsId = $this->positiveId('Board id is invalid', $boardId);
-        if ($boardsId === null) {
-            return;
-        }
+        if ($this->positiveId('Board id is invalid', $boardId) === null) return;
+        $boardsId = (int) $boardId;
 
-        $statusId = $this->positiveId('Status id is invalid', $statusId);
-        if ($statusId === null) {
-            return;
-        }
+        if ($this->positiveId('Status id is invalid', $statusId) === null) return;
+        $statusId = (int) $statusId;
 
         $board = $this->boards->find(['id'], $boardsId);
 
@@ -141,28 +129,17 @@ class DefectsController extends Controller {
     }
 
     public function moveDefect(int $boardId, int $defectId) {
-        $boardId = $this->positiveId('Board id is invalid', $boardId);
-        if ($boardId === null) {
-            return;
-        }
-
-        $defectId = $this->positiveId('Defect id is invalid', $defectId);
-        if ($defectId === null) {
-            return;
-        }
+        if ($this->positiveId('Board id is invalid', $boardId) === null) return;
+        if ($this->positiveId('Defect id is invalid', $defectId) === null) return;
 
         $statusId = $this->request->getDataJson('statusId');
         $position = $this->request->getDataJson('position');
 
-        $statusId = $this->positiveId('Status id is invalid', $statusId);
-        if ($statusId === null) {
-            return;
-        }
+        if ($this->positiveId('Status id is invalid', $statusId) === null) return;
+        $statusId = (int) $statusId;
 
-        $position = $this->positiveId('Position is invalid', $position);
-        if ($position === null) {
-            return;
-        }
+        if ($this->positiveId('Position is invalid', $position) === null) return;
+        $position = (int) $position;
 
         $defect = $this->defect->findByBoardAndId($boardId, $defectId);
 
@@ -184,6 +161,32 @@ class DefectsController extends Controller {
 
         $this->response->json([
             'message' => 'Defect moved successfully.',
+        ], 200);
+    }
+
+    public function deleteDefect(int $boardId, int $defectId) {
+        if ($this->positiveId('Board id is invalid', $boardId) === null) return;
+        if ($this->positiveId('Defect id is invalid', $defectId) === null) return;
+
+        $statusId = $this->request->getDataJson('statusId');
+
+        if ($this->positiveId('Status id is invalid', $statusId) === null) return;
+        $statusId = (int) $statusId;
+
+        $defect = $this->defect->findByBoardAndId($boardId, $defectId);
+
+        if (!$this->validate($defect !== null, 'Defect was not found in this board.', 404)) {
+            return;
+        }
+
+        $deleted = $this->defect->deleteDefectByBoard($boardId, $defectId, $statusId);
+
+        if (!$this->validate($deleted, 'Defect was not deleted in this board.', 500)) {
+            return;
+        }
+
+        $this->response->json([
+            'message' => "Defect {$defect['title']} deleted",
         ], 200);
     }
 }

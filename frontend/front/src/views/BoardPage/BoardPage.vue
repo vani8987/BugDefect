@@ -102,6 +102,7 @@
         @status-drag-end="statusDragEnd"
         @defect-drag-start="startDefectDrag"
         @defect-drop="dropDefect"
+        @delete-defect="deleteDefect"
       />
     </div>
 
@@ -224,6 +225,7 @@ import UiStats from '@/components/ui/stats/UiStats.vue'
 import UiStatCard from '@/components/ui/stat-card/UiStatCard.vue'
 import UiTextarea from '@/components/ui/textarea/UiTextarea.vue'
 import BoardPanel from '@/components/board-workspace/board-panel/BoardPanel.vue'
+import type { DeleteDefectPayload } from '@/components/board-workspace/types'
 import { useBoardStore } from '@/stores/boardStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useInviteStore } from '@/stores/InviteStore'
@@ -457,6 +459,16 @@ async function deleteStatus(value: number) {
     await statusStore.getAll(boardId.value)
   } finally {
     isDeletingStatus.value = false
+  }
+}
+
+async function deleteDefect(value: DeleteDefectPayload): Promise<void> {
+  const isDeleted = await defectsStore.deleteDefect(value.boardId, value.defectId, {
+    statusId: value.statusId,
+  })
+
+  if (isDeleted) {
+    statusStore.deleteDefectInArray(value.boardId, value.defectId, value.statusId)
   }
 }
 
